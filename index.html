@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Ultra X</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #151c2c;
+      --accent-color: #6366f1;
+      --accent-hover: #4f46e5;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #243048;
+      --danger-color: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header Navbar */
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: 0.5px;
+    }
+
+    .user-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      border-color: var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    /* Auth Overlay / Kilitli Ekran */
+    #authOverlay {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+
+    .auth-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .auth-card h2 {
+      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+    }
+
+    .auth-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab-buttons {
+      display: flex;
+      background-color: var(--bg-color);
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .tab-btn.active {
+      background-color: var(--card-bg);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent-color);
+    }
+
+    .submit-btn {
+      width: 100%;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .submit-btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .divider span {
+      padding: 0 0.8rem;
+    }
+
+    .google-btn {
+      width: 100%;
+      background-color: #ffffff;
+      color: #0f172a;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: background 0.2s;
+    }
+
+    .google-btn:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Main Social Feed (Varsayılan olarak gizli) */
+    #mainContent {
+      display: none;
+      max-width: 700px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      flex: 1;
+    }
+
+    .create-post {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .create-post textarea {
+      width: 100%;
+      height: 90px;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      resize: none;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .post-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background-color: var(--accent-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+    }
+
+    .user-info .name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .user-info .time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .post-content {
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      color: #e2e8f0;
+    }
+
+    .post-footer {
+      display: flex;
+      gap: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.8rem;
+    }
+
+    .action-btn {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+
+    .action-btn:hover {
+      color: var(--accent-color);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      background-color: var(--card-bg);
+    }
+
+    footer span {
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <i class="fa-solid fa-bolt-lightning"></i> Aura Ultra X
+    </div>
+    <div class="user-profile-header" id="headerProfile" style="display: none;">
+      <span id="headerUserName" style="font-size: 0.9rem; color: var(--text-muted);"></span>
+      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</button>
+    </div>
+  </header>
+
+  <!-- KİLİTLİ GİRİŞ / KAYIT EKRANI (Giriş yapılmadan asla geçilemez) -->
+  <div id="authOverlay">
+    <div class="auth-card">
+      <h2>Aura Ultra X</h2>
+      <p>Aka katılmak ve içerikleri görmek için giriş yapın veya kayıt olun.</p>
+
+      <div class="tab-buttons">
+        <button class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">Giriş Yap</button>
+        <button class="tab-btn" id="registerTabBtn" onclick="switchTab('register')">Kayıt Ol</button>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuth(event)">
+        <div class="input-group" id="nameGroup" style="display: none;">
+          <input type="text" id="authName" placeholder="Ad Soyad veya Kullanıcı Adı">
+        </div>
+        <div class="input-group">
+          <input type="email" id="authEmail" placeholder="E-posta Adresi" required>
+        </div>
+        <div class="input-group">
+          <input type="password" id="authPassword" placeholder="Şifre" required>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Giriş Yap</button>
+      </form>
+
+      <div class="divider">
+        <span>VEYA</span>
+      </div>
+
+      <button class="google-btn" onclick="loginWithGoogle()">
+        <i class="fa-brands fa-google"></i> Google ile Devam Et
+      </button>
+    </div>
+  </div>
+
+  <!-- ANA SOSYAL MEDYA AKIŞI (Sadece giriş yapıldığında görünür) -->
+  <div id="mainContent">
+    <div class="create-post">
+      <textarea id="postInput" placeholder="Aura Ultra X ağında neler paylaşmak istersin?"></textarea>
+      <div class="post-actions">
+        <span style="color: var(--text-muted); font-size: 0.85rem;" id="userStatus"></span>
+        <button class="submit-btn" style="width: auto; padding: 0.6rem 1.5rem;" onclick="addPost()">Paylaş</button>
+      </div>
+    </div>
+
+    <div id="feed">
+      <!-- Gönderiler buraya dinamik gelecek -->
+    </div>
+  </div>
+
+  <footer>
+    <p>Powered by <span>Gemini</span> &copy; 2026 Aura Ultra X</p>
+  </footer>
+
+  <!-- Firebase SDK Entegrasyonu -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      updateProfile,
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      onSnapshot, 
+      query, 
+      orderBy, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Firebase Konsolundan alacağın kendi yapılandırma bilgilerini buraya yapıştır!
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    let currentMode = 'login'; // 'login' veya 'register'
+
+    // Tab Değiştirme
+    window.switchTab = (mode) => {
+      currentMode = mode;
+      const loginBtn = document.getElementById('loginTabBtn');
+      const registerBtn = document.getElementById('registerTabBtn');
+      const nameGroup = document.getElementById('nameGroup');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (mode === 'register') {
+        loginBtn.classList.remove('active');
+        registerBtn.classList.add('active');
+        nameGroup.style.display = 'block';
+        submitBtn.innerText = 'Kayıt Ol';
+      } else {
+        registerBtn.classList.remove('active');
+        loginBtn.classList.add('active');
+        nameGroup.style.display = 'none';
+        submitBtn.innerText = 'Giriş Yap';
+      }
+    };
+
+    // E-posta / Şifre Form İşlemi
+    window.handleAuth = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName').value;
+
+      try {
+        if (currentMode === 'register') {
+          const res = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(res.user, { displayName: name });
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (error) {
+        alert("Hata: " + error.message);
+      }
+    };
+
+    // Google ile Giriş
+    window.loginWithGoogle = async () => {
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (error) {
+        alert("Google Giriş Hatası: " + error.message);
+      }
+    };
+
+    // Çıkış Yap
+    window.logout = async () => {
+      await signOut(auth);
+    };
+
+    // Oturum Kontrolü (Giriş yapılmadıysa ana sayfayı TAMAMEN gizler)
+    onAuthStateChanged(auth, (user) => {
+      const authOverlay = document.getElementById('authOverlay');
+      const mainContent = document.getElementById('mainContent');
+      const headerProfile = document.getElementById('headerProfile');
+      const headerUserName = document.getElementById('headerUserName');
+      const userStatus = document.getElementById('userStatus');
+
+      if (user) {
+        // Giriş Yapılmışsa Ana Sayfayı Göster
+        authOverlay.style.display = 'none';
+        mainContent.style.display = 'block';
+        headerProfile.style.display = 'flex';
+        headerUserName.innerText = user.displayName || user.email;
+        userStatus.innerText = `${user.displayName || user.email} olarak paylaşıyorsun`;
+        
+        // Akışı Dinlemeye Başla
+        loadPosts();
+      } else {
+        // Giriş Yapılmamışsa Sadece Giriş Ekranını Göster
+        authOverlay.style.display = 'flex';
+        mainContent.style.display = 'none';
+        headerProfile.style.display = 'none';
+      }
+    });
+
+    // Gönderi Paylaşma
+    window.addPost = async () => {
+      const input = document.getElementById('postInput');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      try {
+        await addDoc(collection(db, "posts"), {
+          uid: auth.currentUser.uid,
+          author: auth.currentUser.displayName || auth.currentUser.email.split('@')[0],
+          content: text,
+          createdAt: serverTimestamp(),
+          likes: 0
+        });
+        input.value = "";
+      } catch (error) {
+        console.error("Paylaşım hatası:", error);
+      }
+    };
+
+    // Firestore Canlı Akış Dinleyici
+    function loadPosts() {
+      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snapshot) => {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = "";
+
+        if (snapshot.empty) {
+          feed.innerHTML = `<p style="text-align: center; color: var(--text-muted);">Henüz hiç gönderi yok. İlk paylaşımı sen yap!</p>`;
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const post = doc.data();
+          const postElement = document.createElement('div');
+          postElement.className = 'post-card';
+          postElement.innerHTML = `
+            <div class="post-header">
+              <div class="avatar">${post.author ? post.author[0].toUpperCase() : 'A'}</div>
+              <div class="user-info">
+                <div class="name">${post.author || 'Aura Kullanıcısı'}</div>
+                <div class="time">Canlı Akış</div>
+              </div>
+            </div>
+            <div class="post-content">${post.content}</div>
+            <div class="post-footer">
+              <div class="action-btn"><i class="fa-regular fa-heart"></i> ${post.likes || 0}</div>
+              <div class="action-btn"><i class="fa-regular fa-comment"></i> 0</div>
+            </div>
+          `;
+          feed.appendChild(postElement);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
