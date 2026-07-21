@@ -2,502 +2,435 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura Ultra X | Yeni Nesil Sosyal Ağ</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aura Ultra X | Yeni Nesil Sosyal Ekosistem</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* ---------------- TEMA VE DEĞİŞKENLER ---------------- */
     :root {
-      --bg-dark: #050505;
-      --bg-surface: #0f0f13;
-      --bg-surface-light: #1a1a20;
-      --primary: #8b5cf6;
-      --primary-hover: #7c3aed;
-      --secondary: #ec4899;
-      --text-100: #ffffff;
-      --text-200: #a1a1aa;
-      --border: #27272a;
-      --glass: rgba(25, 25, 30, 0.6);
-      --danger: #f43f5e;
+      --bg-base: #000000;
+      --bg-surface: #0a0a0c;
+      --bg-surface-hover: #16161a;
+      --border: #222228;
+      --primary: #7c3aed;
+      --primary-hover: #6d28d9;
+      --accent: #ec4899;
+      --text-main: #f9fafb;
+      --text-muted: #71717a;
+      --danger: #ef4444;
       --success: #10b981;
+      --sidebar-width: 275px;
+      --right-panel-width: 350px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    body { background-color: var(--bg-dark); color: var(--text-100); overflow-x: hidden; display: flex; justify-content: center; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-    /* ---------------- AUTH EKRANI (ŞAHESER GİRİŞ) ---------------- */
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* --- AUTH EKRANI --- */
     #authOverlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: var(--bg-dark); z-index: 10000; display: flex;
+      background: var(--bg-base); z-index: 9999; display: flex;
+      justify-content: center; align-items: center; padding: 20px;
     }
-    .auth-left {
-      flex: 1; background: linear-gradient(135deg, var(--bg-dark), #170f2e);
-      display: flex; flex-direction: column; justify-content: center; padding: 5rem;
-      position: relative; overflow: hidden;
+
+    .auth-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      width: 100%; max-width: 440px; padding: 2.5rem; border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(124, 58, 237, 0.15); text-align: center;
     }
-    .auth-left::before {
-      content: ''; position: absolute; width: 600px; height: 600px;
-      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-      opacity: 0.15; top: -100px; left: -100px; filter: blur(60px);
-    }
-    .auth-left h1 { font-size: 4rem; font-weight: 900; background: -webkit-linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
-    .auth-left p { font-size: 1.2rem; color: var(--text-200); max-width: 400px; line-height: 1.6; }
-    
-    .auth-right {
-      width: 500px; display: flex; justify-content: center; align-items: center;
-      background: var(--bg-surface); border-left: 1px solid var(--border);
-    }
-    .auth-form-container { width: 100%; max-width: 360px; padding: 2rem; }
-    .auth-form-container h2 { font-size: 2rem; margin-bottom: 0.5rem; }
-    .auth-form-container p { color: var(--text-200); margin-bottom: 2rem; }
-    
-    .input-box { position: relative; margin-bottom: 1.5rem; }
-    .input-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-200); }
-    .input-box input {
-      width: 100%; background: var(--bg-surface-light); border: 1px solid var(--border);
-      color: var(--text-100); padding: 16px 16px 16px 45px; border-radius: 16px;
+
+    .auth-logo { font-size: 2.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .auth-logo i { color: var(--primary); text-shadow: 0 0 20px rgba(124, 58, 237, 0.5); }
+    .auth-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+    .auth-input-group { position: relative; margin-bottom: 1rem; text-align: left; }
+    .auth-input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .auth-input {
+      width: 100%; background: var(--bg-base); border: 1px solid var(--border);
+      color: var(--text-main); padding: 14px 16px 14px 45px; border-radius: 12px;
       font-size: 1rem; outline: none; transition: 0.3s;
     }
-    .input-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1); }
-    
-    .btn-glow {
-      width: 100%; background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white; border: none; padding: 16px; border-radius: 16px;
-      font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s;
-      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
-    }
-    .btn-glow:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(139, 92, 246, 0.4); }
-    
-    .auth-switch { text-align: center; margin-top: 1.5rem; color: var(--text-200); cursor: pointer; }
-    .auth-switch span { color: var(--primary); font-weight: 600; }
-    .auth-switch span:hover { text-decoration: underline; }
+    .auth-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
 
-    /* ---------------- ANA UYGULAMA LAYOUT ---------------- */
+    .btn-auth-main {
+      width: 100%; background: var(--primary); color: white; border: none;
+      padding: 14px; border-radius: 12px; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; transition: 0.3s; margin-top: 10px;
+    }
+    .btn-auth-main:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .auth-switch-text { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; }
+    .auth-switch-text span { color: var(--primary); font-weight: 700; }
+    .auth-switch-text span:hover { text-decoration: underline; }
+
+    /* --- ANA UYGULAMA LAYOUT --- */
     #app {
-      display: none; width: 100%; max-width: 1350px;
-      grid-template-columns: 280px minmax(600px, 1fr) 350px;
-      gap: 20px; padding: 0 20px;
+      display: none; width: 100%; max-width: 1300px;
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--right-panel-width);
+      min-height: 100vh;
     }
 
-    /* SOL MENÜ (İLERİ SEVİYE) */
-    .sidebar { height: 100vh; position: sticky; top: 0; padding: 2rem 0; display: flex; flex-direction: column; }
-    .brand { font-size: 2.2rem; font-weight: 900; margin-bottom: 2.5rem; padding-left: 1rem; display: flex; align-items: center; gap: 10px; }
-    .brand i { color: var(--primary); }
-    
-    .nav-item {
-      display: flex; align-items: center; gap: 20px; padding: 16px 20px;
-      color: var(--text-200); text-decoration: none; font-size: 1.25rem;
-      font-weight: 500; border-radius: 99px; transition: 0.2s; margin-bottom: 5px;
+    /* SOL MENÜ (DESKTOP) */
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; padding: 1.5rem 1rem;
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      justify-content: space-between;
     }
-    .nav-item:hover, .nav-item.active { background: var(--bg-surface); color: var(--text-100); }
-    .nav-item.active { font-weight: 700; }
-    .nav-item i { font-size: 1.6rem; width: 30px; text-align: center; transition: 0.3s; }
-    .nav-item:hover i { transform: scale(1.1); color: var(--primary); }
-    
-    .btn-compose { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 99px; font-size: 1.2rem; font-weight: 700; cursor: pointer; margin-top: 1.5rem; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.25); transition: 0.3s; width: 90%; }
-    .btn-compose:hover { background: var(--primary-hover); transform: translateY(-2px); }
+    .sidebar-top { display: flex; flex-direction: column; gap: 5px; }
+    .app-brand { font-size: 1.8rem; font-weight: 800; padding: 0.5rem 1rem 1.5rem 1rem; display: flex; align-items: center; gap: 10px; }
+    .app-brand i { color: var(--primary); }
 
-    .user-pill {
-      margin-top: auto; display: flex; align-items: center; gap: 12px;
-      padding: 12px; border-radius: 99px; cursor: pointer; transition: 0.3s; width: 90%;
+    .nav-link {
+      display: flex; align-items: center; gap: 18px; padding: 12px 16px;
+      color: var(--text-main); text-decoration: none; font-size: 1.15rem; font-weight: 500;
+      border-radius: 99px; transition: 0.2s;
     }
-    .user-pill:hover { background: var(--bg-surface); }
-    .user-pill .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(45deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-    .user-pill-info { flex: 1; }
-    .user-pill-info h4 { font-size: 1rem; display: flex; align-items: center; gap: 5px; }
-    .user-pill-info p { font-size: 0.85rem; color: var(--text-200); }
-    .verified-badge { color: #38bdf8; font-size: 0.9rem; }
+    .nav-link:hover, .nav-link.active { background: var(--bg-surface-hover); color: var(--primary); font-weight: 700; }
+    .nav-link i { font-size: 1.4rem; width: 25px; text-align: center; }
 
-    /* ORTA AKIŞ (MAIN FEED) */
-    .main-feed { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-height: 100vh; padding-bottom: 100px; }
-    .feed-header { position: sticky; top: 0; background: var(--glass); backdrop-filter: blur(20px); padding: 1.5rem; z-index: 100; border-bottom: 1px solid var(--border); font-size: 1.4rem; font-weight: 800; display: flex; justify-content: space-between; align-items: center;}
-    
-    /* Hikayeler */
-    .stories-wrapper { display: flex; gap: 15px; padding: 1.5rem; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
-    .story-card { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
-    .story-ring { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(45deg, var(--secondary), var(--primary)); padding: 3px; }
-    .story-inner { width: 100%; height: 100%; background: var(--bg-dark); border-radius: 50%; border: 2px solid var(--bg-dark); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem; }
-    .story-card span { font-size: 0.8rem; color: var(--text-200); }
+    .btn-sidebar-post {
+      background: var(--primary); color: white; border: none; padding: 14px;
+      border-radius: 99px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+      width: 100%; margin-top: 1rem; transition: 0.3s; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+    }
+    .btn-sidebar-post:hover { background: var(--primary-hover); }
 
-    /* Gönderi Yazma Alanı */
-    .compose-area { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; }
-    .compose-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-surface-light); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold;}
-    .compose-body { flex: 1; }
-    .compose-body textarea { width: 100%; background: transparent; border: none; color: var(--text-100); font-size: 1.3rem; resize: none; min-height: 60px; outline: none; margin-top: 10px; }
-    .compose-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; }
-    .action-icons i { color: var(--primary); font-size: 1.2rem; padding: 10px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
-    .action-icons i:hover { background: rgba(139, 92, 246, 0.1); }
-    .btn-submit { background: var(--primary); color: white; border: none; padding: 8px 20px; border-radius: 99px; font-weight: 700; cursor: pointer; }
+    .user-profile-badge {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 99px; cursor: pointer; transition: 0.2s;
+    }
+    .user-profile-badge:hover { background: var(--bg-surface-hover); }
+    .user-info-wrapper { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; flex-shrink: 0; }
+    .user-text-box h4 { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-text-box p { font-size: 0.8rem; color: var(--text-muted); }
 
-    /* Post Tasarımı */
-    .post-card { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; transition: background 0.2s; cursor: pointer; }
+    /* ORTA AKIŞ (FEED) */
+    .main-feed-container {
+      border-right: 1px solid var(--border); min-height: 100vh;
+      padding-bottom: 80px; position: relative;
+    }
+    .feed-header-sticky {
+      position: sticky; top: 0; background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px); padding: 1rem 1.5rem; z-index: 100;
+      border-bottom: 1px solid var(--border); font-size: 1.25rem; font-weight: 800;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .composer-box { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 15px; }
+    .composer-content { flex: 1; }
+    .composer-textarea {
+      width: 100%; background: transparent; border: none; color: var(--text-main);
+      font-size: 1.15rem; resize: none; min-height: 70px; outline: none; margin-top: 8px;
+    }
+    .composer-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
+    .composer-icons { display: flex; gap: 15px; color: var(--primary); font-size: 1.2rem; cursor: pointer; }
+    .btn-post-submit {
+      background: var(--primary); color: white; border: none; padding: 8px 22px;
+      border-radius: 99px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .btn-post-submit:hover { background: var(--primary-hover); }
+
+    /* GÖNDERİ KARTLARI */
+    .post-card {
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; gap: 15px; transition: background 0.2s; cursor: pointer;
+    }
     .post-card:hover { background: var(--bg-surface); }
-    .post-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-surface-light); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;}
-    .post-content { flex: 1; }
-    .post-meta { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .post-meta-left { display: flex; align-items: center; gap: 8px; }
-    .post-meta-left h4 { font-size: 1.1rem; display: flex; align-items: center; gap: 5px; }
-    .post-meta-left span { color: var(--text-200); font-size: 0.95rem; }
-    .post-text { font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem; white-space: pre-wrap; }
-    
-    .post-engagement { display: flex; justify-content: space-between; max-width: 450px; color: var(--text-200); }
-    .eng-btn { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; cursor: pointer; transition: 0.2s; padding: 8px; border-radius: 99px; }
-    .eng-btn:hover { background: rgba(161, 161, 170, 0.1); color: var(--primary); }
-    .eng-btn.like:hover, .eng-btn.liked { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
-    .eng-btn.repost:hover { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+    .post-main-content { flex: 1; overflow: hidden; }
+    .post-user-info { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .post-user-info h4 { font-size: 1rem; font-weight: 700; }
+    .post-user-info span { font-size: 0.85rem; color: var(--text-muted); }
+    .verified-icon { color: #38bdf8; font-size: 0.85rem; }
+    .post-body-text { font-size: 1.05rem; line-height: 1.5; word-break: break-word; margin-bottom: 12px; white-space: pre-wrap; }
+    .post-actions-row { display: flex; justify-content: space-between; max-width: 400px; color: var(--text-muted); }
+    .post-action-btn { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.2s; }
+    .post-action-btn:hover { color: var(--primary); }
+    .post-action-btn.liked { color: var(--danger); }
 
-    /* Skeleton Loading Animasyonu */
-    .skeleton { animation: pulse 1.5s infinite ease-in-out; }
-    @keyframes pulse { 0% { background-color: var(--bg-surface); } 50% { background-color: var(--bg-surface-light); } 100% { background-color: var(--bg-surface); } }
+    /* SAĞ PANEL (DESKTOP) */
+    .right-sidebar { padding: 1.5rem; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .search-input-wrapper { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 99px; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+    .search-input-wrapper input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 0.95rem; }
+    .search-input-wrapper i { color: var(--text-muted); }
 
-    /* SAĞ PANEL (TRENDLER & WIDGETLAR) */
-    .right-panel { padding: 2rem 0; display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 0; height: 100vh; }
-    .search-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 99px; padding: 15px 25px; display: flex; align-items: center; gap: 15px; }
-    .search-box input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 1rem; }
-    .search-box i { color: var(--text-200); }
-    
-    .widget-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
-    .widget-box h3 { font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; }
-    .trend-item { margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-    .trend-item:last-child { margin-bottom: 0; }
-    .trend-info p { font-size: 0.85rem; color: var(--text-200); margin-bottom: 3px; }
-    .trend-info h4 { font-size: 1rem; font-weight: 700; }
-    .trend-item i { color: var(--text-200); }
+    .widget-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem; }
+    .widget-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; }
+    .trending-topic { margin-bottom: 12px; }
+    .trending-topic:last-child { margin-bottom: 0; }
+    .trending-topic span { font-size: 0.75rem; color: var(--text-muted); }
+    .trending-topic h4 { font-size: 0.95rem; font-weight: 700; margin-top: 2px; }
 
-    /* Yüzen Mesaj Balonu (FAB) */
-    .messages-fab {
-      position: fixed; bottom: 30px; right: 30px; background: var(--bg-surface);
-      border: 1px solid var(--border); border-radius: 16px; width: 350px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 1000; display: flex;
-      flex-direction: column; overflow: hidden; transition: 0.3s; height: 60px;
+    /* MOBİL ALT MENÜ */
+    .mobile-bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; width: 100%;
+      background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(15px);
+      border-top: 1px solid var(--border); z-index: 1000;
+      justify-content: space-around; padding: 12px 0;
     }
-    .fab-header { padding: 15px 20px; background: var(--bg-surface-light); display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border); }
-    .fab-header i { transition: 0.3s; }
-    .messages-fab.open { height: 400px; }
-    .messages-fab.open .fab-header i { transform: rotate(180deg); }
-    .fab-content { padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-200); text-align: center; }
+    .mobile-nav-item { color: var(--text-muted); font-size: 1.4rem; text-decoration: none; transition: 0.2s; }
+    .mobile-nav-item.active, .mobile-nav-item:hover { color: var(--primary); }
 
-    /* Responsive Gizleme */
-    @media (max-width: 1200px) { .right-panel { display: none; } #app { grid-template-columns: 280px 1fr; } }
-    @media (max-width: 768px) { .sidebar .brand span, .nav-item span, .user-pill-info, .btn-compose { display: none; } #app { grid-template-columns: 80px 1fr; } .nav-item { justify-content: center; padding: 16px 0; } }
+    /* RESPONSIVE KURALLARI */
+    @media (max-width: 1024px) {
+      #app { grid-template-columns: 80px 1fr; }
+      .sidebar { align-items: center; }
+      .app-brand span, .nav-link span, .btn-sidebar-post, .user-text-box { display: none; }
+      .right-sidebar { display: none; }
+      .sidebar { padding: 1.5rem 0.5rem; }
+      .user-profile-badge { justify-content: center; padding: 8px; }
+    }
+
+    @media (max-width: 768px) {
+      #app { grid-template-columns: 1fr; padding-bottom: 70px; }
+      .sidebar { display: none; }
+      .mobile-bottom-nav { display: flex; }
+      .main-feed-container { border-right: none; }
+      .auth-card { padding: 1.5rem; border: none; background: transparent; box-shadow: none; }
+      #authOverlay { background: var(--bg-base); }
+    }
   </style>
 </head>
 <body>
 
   <!-- AUTH EKRANI -->
   <div id="authOverlay">
-    <div class="auth-left">
-      <h1>Aura Ultra X</h1>
-      <p>Sıradanlığı reddet. Kendi auranı yarat, sınırları aş ve geleceğin sosyal ağına hemen şimdi katıl.</p>
-    </div>
-    <div class="auth-right">
-      <div class="auth-form-container">
-        <h2 id="authTitle">Giriş Yap</h2>
-        <p id="authDesc">Aura evrenine geri dön.</p>
-        
-        <div class="input-box" id="usernameGroup" style="display: none;">
-          <i class="fa-solid fa-user"></i>
-          <input type="text" id="usernameInput" placeholder="Sana özel kullanıcı adın">
-        </div>
-        <div class="input-box">
-          <i class="fa-solid fa-envelope"></i>
-          <input type="email" id="emailInput" placeholder="E-posta adresin">
-        </div>
-        <div class="input-box">
-          <i class="fa-solid fa-lock"></i>
-          <input type="password" id="passwordInput" placeholder="Şifren">
-        </div>
-        
-        <button class="btn-glow" id="authBtn" onclick="submitAuth()">Aura'ya Katıl</button>
-        <div class="auth-switch" onclick="toggleAuthMode()">
-          <span id="authToggleText">Hesabın yok mu? Kayıt Ol</span>
-        </div>
+    <div class="auth-card">
+      <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura</div>
+      <p class="auth-subtitle" id="authSubtitle">Sınırları aş, kendi aurani yarat.</p>
+      
+      <div class="auth-input-group" id="usernameGroup" style="display: none;">
+        <i class="fa-solid fa-user"></i>
+        <input type="text" id="usernameInput" class="auth-input" placeholder="Kullanıcı Adı">
       </div>
+      <div class="auth-input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="emailInput" class="auth-input" placeholder="E-posta Adresi">
+      </div>
+      <div class="auth-input-group">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="passwordInput" class="auth-input" placeholder="Şifre">
+      </div>
+
+      <button class="btn-auth-main" id="authBtn" onclick="submitAuth()">Giriş Yap</button>
+      
+      <p class="auth-switch-text" onclick="toggleAuthMode()" id="authToggleText">
+        Hesabın yok mu? <span>Kayıt Ol</span>
+      </p>
     </div>
   </div>
 
   <!-- ANA UYGULAMA -->
   <div id="app">
-    
-    <!-- SOL MENÜ -->
     <aside class="sidebar">
-      <div class="brand"><i class="fa-solid fa-bolt-lightning"></i> <span>Aura</span></div>
-      <nav>
-        <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i> <span>Ana Sayfa</span></a>
-        <a href="#" class="nav-item"><i class="fa-solid fa-compass"></i> <span>Keşfet</span></a>
-        <a href="#" class="nav-item"><i class="fa-regular fa-bell"></i> <span>Bildirimler</span></a>
-        <a href="#" class="nav-item"><i class="fa-regular fa-envelope"></i> <span>Mesajlar</span></a>
-        <a href="#" class="nav-item"><i class="fa-regular fa-bookmark"></i> <span>Kaydedilenler</span></a>
-        <a href="#" class="nav-item"><i class="fa-regular fa-user"></i> <span>Profil</span></a>
-      </nav>
-      <button class="btn-compose">Gönder</button>
-      
-      <div class="user-pill" onclick="logout()" title="Çıkış Yap">
-        <div class="avatar" id="myAvatar">A</div>
-        <div class="user-pill-info">
-          <h4><span id="myUserName">Kullanıcı</span> <i class="fa-solid fa-circle-check verified-badge"></i></h4>
-          <p id="myUserHandle">@kullanici</p>
+      <div class="sidebar-top">
+        <div class="app-brand"><i class="fa-solid fa-bolt-lightning"></i> <span>Aura</span></div>
+        <nav style="display: flex; flex-direction: column; gap: 5px;">
+          <a href="#" class="nav-link active"><i class="fa-solid fa-house"></i> <span>Ana Sayfa</span></a>
+          <a href="#" class="nav-link"><i class="fa-solid fa-compass"></i> <span>Keşfet</span></a>
+          <a href="#" class="nav-link"><i class="fa-regular fa-bell"></i> <span>Bildirimler</span></a>
+          <a href="#" class="nav-link"><i class="fa-regular fa-envelope"></i> <span>Mesajlar</span></a>
+          <a href="#" class="nav-link"><i class="fa-regular fa-user"></i> <span>Profil</span></a>
+        </nav>
+        <button class="btn-sidebar-post" onclick="document.getElementById('postInput').focus();">Gönder</button>
+      </div>
+
+      <div class="user-profile-badge" onclick="logout()" title="Çıkış Yap">
+        <div class="user-info-wrapper">
+          <div class="user-avatar" id="desktopAvatar">A</div>
+          <div class="user-text-box">
+            <h4 id="desktopUserName">Kullanıcı</h4>
+            <p id="desktopUserHandle">@kullanici</p>
+          </div>
         </div>
-        <i class="fa-solid fa-ellipsis" style="color:var(--text-200)"></i>
+        <i class="fa-solid fa-right-from-bracket" style="color: var(--danger); font-size: 1rem;"></i>
       </div>
     </aside>
 
-    <!-- ORTA AKIŞ -->
-    <main class="main-feed">
-      <div class="feed-header">
-        <span>Sana Özel</span>
-        <i class="fa-solid fa-gear" style="font-size: 1.2rem; cursor:pointer;"></i>
+    <main class="main-feed-container">
+      <div class="feed-header-sticky">
+        <span>Akış</span>
+        <i class="fa-solid fa-sparkles" style="color: var(--primary);"></i>
       </div>
 
-      <!-- Hikayeler -->
-      <div class="stories-wrapper">
-        <div class="story-card">
-          <div class="story-ring" style="background: var(--bg-surface-light); border: 2px dashed var(--text-200); padding: 0;"><div class="story-inner"><i class="fa-solid fa-plus"></i></div></div>
-          <span>Ekle</span>
-        </div>
-        <div class="story-card"><div class="story-ring"><div class="story-inner" style="background: #10b981;">E</div></div><span>elonmusk</span></div>
-        <div class="story-card"><div class="story-ring"><div class="story-inner" style="background: #3b82f6;">M</div></div><span>mrbeast</span></div>
-        <div class="story-card"><div class="story-ring"><div class="story-inner" style="background: #f43f5e;">A</div></div><span>aurateam</span></div>
-        <div class="story-card"><div class="story-ring"><div class="story-inner" style="background: #eab308;">R</div></div><span>ronaldo</span></div>
-      </div>
-
-      <!-- Gönderi Oluşturucu -->
-      <div class="compose-area">
-        <div class="compose-avatar" id="composerAvatar">A</div>
-        <div class="compose-body">
-          <textarea id="postInput" placeholder="Aura'da neler oluyor?"></textarea>
-          <div class="compose-actions">
-            <div class="action-icons">
-              <i class="fa-regular fa-image" title="Medya Ekle"></i>
-              <i class="fa-solid fa-square-poll-horizontal" title="Anket"></i>
+      <div class="composer-box">
+        <div class="user-avatar" id="composerAvatar" style="width: 44px; height: 44px; font-size: 1.1rem;">A</div>
+        <div class="composer-content">
+          <textarea id="postInput" class="composer-textarea" placeholder="Aura'da neler oluyor?"></textarea>
+          <div class="composer-footer">
+            <div class="composer-icons">
+              <i class="fa-regular fa-image" title="Medya"></i>
+              <i class="fa-solid fa-poll" title="Anket"></i>
               <i class="fa-regular fa-face-smile" title="Emoji"></i>
-              <i class="fa-solid fa-location-dot" title="Konum"></i>
             </div>
-            <button class="btn-submit" onclick="addPost()">Paylaş</button>
+            <button class="btn-post-submit" onclick="addPost()">Paylaş</button>
           </div>
         </div>
       </div>
 
-      <!-- Skeleton Yükleme (Veriler gelmeden önce görünür) -->
-      <div id="feedLoading" style="padding: 1.5rem;">
-        <div style="display:flex; gap:1rem; margin-bottom: 2rem;">
-          <div class="skeleton" style="width:48px; height:48px; border-radius:50%;"></div>
-          <div style="flex:1;">
-            <div class="skeleton" style="width:150px; height:20px; border-radius:4px; margin-bottom:10px;"></div>
-            <div class="skeleton" style="width:100%; height:15px; border-radius:4px; margin-bottom:5px;"></div>
-            <div class="skeleton" style="width:80%; height:15px; border-radius:4px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gerçek Gönderiler -->
-      <div id="feed"></div>
+      <div id="feedContainer"></div>
     </main>
 
-    <!-- SAĞ PANEL -->
-    <aside class="right-panel">
-      <div class="search-box">
+    <aside class="right-sidebar">
+      <div class="search-input-wrapper">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="text" placeholder="Aura'da Ara">
       </div>
-      
-      <div class="widget-box">
-        <h3>İlgini Çekebilecek Gündemler</h3>
-        <div class="trend-item">
-          <div class="trend-info">
-            <p>Teknoloji · Gündemdekiler</p>
-            <h4>#AuraUltraX_V3</h4>
-            <p>345 B Gönderi</p>
-          </div>
-          <i class="fa-solid fa-ellipsis"></i>
-        </div>
-        <div class="trend-item">
-          <div class="trend-info">
-            <p>Yapay Zeka · Gündemdekiler</p>
-            <h4>Gemini ile Kodlama</h4>
-            <p>120 B Gönderi</p>
-          </div>
-          <i class="fa-solid fa-ellipsis"></i>
-        </div>
-        <div class="trend-item">
-          <div class="trend-info">
-            <p>Eğlence · Gündemdekiler</p>
-            <h4>Dedenin Tepkisi</h4>
-            <p>54 B Gönderi</p>
-          </div>
-          <i class="fa-solid fa-ellipsis"></i>
-        </div>
-      </div>
 
-      <div class="widget-box">
-        <h3>Kimi Takip Etmeli</h3>
-        <div class="trend-item" style="margin-bottom: 1rem;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div class="compose-avatar" style="background:#8b5cf6; width:40px; height:40px;">G</div>
-            <div class="trend-info"><h4>Gemini AI <i class="fa-solid fa-circle-check verified-badge"></i></h4><p>@gemini</p></div>
-          </div>
-          <button style="background:white; color:black; border:none; padding:6px 15px; border-radius:99px; font-weight:700; cursor:pointer;">Takip Et</button>
+      <div class="widget-card">
+        <h3>Gündemdekiler</h3>
+        <div class="trending-topic">
+          <span>Teknoloji · Gündemde</span>
+          <h4>#AuraUltraX</h4>
         </div>
-      </div>
-      
-      <div style="font-size: 0.85rem; color: var(--text-200); padding-left: 1rem;">
-        Hizmet Şartları Gizlilik Politikası Çerez Politikası <br>
-        © 2026 Aura Ultra X. Powered by Gemini.
+        <div class="trending-topic" style="margin-top: 12px;">
+          <span>Yazılım · Gündemde</span>
+          <h4>#WebDevelopment</h4>
+        </div>
       </div>
     </aside>
   </div>
 
-  <!-- Yüzen Mesajlar Modülü (Görsel Zenginlik) -->
-  <div class="messages-fab" id="msgFab">
-    <div class="fab-header" onclick="document.getElementById('msgFab').classList.toggle('open')">
-      <span><i class="fa-regular fa-envelope"></i> Mesajlar</span>
-      <i class="fa-solid fa-chevron-up"></i>
-    </div>
-    <div class="fab-content">
-      <i class="fa-regular fa-paper-plane" style="font-size: 3rem; margin-bottom: 1rem; color: var(--border);"></i>
-      <h3>Mesajlarına Hoş Geldin</h3>
-      <p style="font-size: 0.9rem; margin-top: 10px;">Başkalarıyla özel olarak bağlantı kur. <br>Yakında aktif olacak!</p>
-    </div>
+  <div class="mobile-bottom-nav">
+    <a href="#" class="mobile-nav-item active"><i class="fa-solid fa-house"></i></a>
+    <a href="#" class="mobile-nav-item"><i class="fa-solid fa-compass"></i></a>
+    <a href="#" class="mobile-nav-item"><i class="fa-regular fa-bell"></i></a>
+    <a href="#" class="mobile-nav-item" onclick="logout()"><i class="fa-regular fa-user"></i></a>
   </div>
 
-  <!-- FIREBASE AUTH & FIRESTORE (Kullanıcı Adı / Şifre) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  <script>
+    let isLoginMode = true;
 
-    // BURAYA KENDİ FIREBASE BİLGİLERİNİ YAPIŞTIR
-    const firebaseConfig = {
-      apiKey: "SENIN_API_KEY",
-      authDomain: "SENIN_PROJEN.firebaseapp.com",
-      projectId: "SENIN_PROJEN_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let isLogin = true;
-    
     window.toggleAuthMode = () => {
-      isLogin = !isLogin;
-      document.getElementById('usernameGroup').style.display = isLogin ? 'none' : 'block';
-      document.getElementById('authTitle').innerText = isLogin ? 'Giriş Yap' : 'Aura\'ya Katıl';
-      document.getElementById('authDesc').innerText = isLogin ? 'Aura evrenine geri dön.' : 'Hesabını oluştur ve sınırları aş.';
-      document.getElementById('authBtn').innerText = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-      document.getElementById('authToggleText').innerText = isLogin ? 'Hesabın yok mu? Kayıt Ol' : 'Zaten hesabın var mı? Giriş Yap';
+      isLoginMode = !isLoginMode;
+      document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
+      document.getElementById('authSubtitle').innerText = isLoginMode ? 'Sınırları aş, kendi aurani yarat.' : 'Hemen yeni bir hesap oluştur.';
+      document.getElementById('authBtn').innerText = isLoginMode ? 'Giriş Yap' : 'Kayıt Ol';
+      document.getElementById('authToggleText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
     };
 
-    window.submitAuth = async () => {
+    window.submitAuth = () => {
       const email = document.getElementById('emailInput').value.trim();
-      const pass = document.getElementById('passwordInput').value.trim();
-      const user = document.getElementById('usernameInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+      const username = document.getElementById('usernameInput').value.trim();
 
-      if(!email || !pass) return alert("Bilgileri eksiksiz girin!");
-      const btn = document.getElementById('authBtn');
-      btn.innerText = "Bekleniyor...";
+      if (!email || !password) return alert("Lütfen boş alan bırakmayın!");
+      if (!isLoginMode && !username) return alert("Kayıt için kullanıcı adı gerekli!");
 
-      try {
-        if(isLogin) {
-          await signInWithEmailAndPassword(auth, email, pass);
-        } else {
-          if(!user) throw new Error("Kullanıcı adı zorunlu!");
-          const cred = await createUserWithEmailAndPassword(auth, email, pass);
-          await updateProfile(cred.user, { displayName: user });
-          window.location.reload();
-        }
-      } catch (err) {
-        alert("Hata: " + err.message);
-        btn.innerText = isLogin ? 'Giriş Yap' : 'Kayıt Ol';
-      }
+      const displayName = isLoginMode ? email.split('@')[0] : username;
+      const fakeUser = { displayName: displayName, email: email };
+      
+      localStorage.setItem('aura_active_user', JSON.stringify(fakeUser));
+      initAppUI(fakeUser);
+      loadLocalPosts();
     };
 
-    window.logout = async () => { if(confirm("Çıkış yapılıyor?")) await signOut(auth); };
+    window.logout = () => {
+      localStorage.removeItem('aura_active_user');
+      location.reload();
+    };
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('authOverlay').style.display = 'none';
-        document.getElementById('app').style.display = 'grid';
-        
-        const name = user.displayName || "Aura Kullanıcısı";
-        const initial = name[0].toUpperCase();
-        const handle = "@" + (user.email ? user.email.split('@')[0] : "user");
-        
-        document.getElementById('myAvatar').innerText = initial;
-        document.getElementById('composerAvatar').innerText = initial;
-        document.getElementById('myUserName').innerText = name;
-        document.getElementById('myUserHandle').innerText = handle;
-
-        loadPosts();
+    function checkAuth() {
+      const localUser = JSON.parse(localStorage.getItem('aura_active_user'));
+      if (localUser) {
+        initAppUI(localUser);
+        loadLocalPosts();
       } else {
-        document.getElementById('authOverlay').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
+        showAuthScreen();
       }
-    });
+    }
 
-    window.addPost = async () => {
+    function initAppUI(user) {
+      document.getElementById('authOverlay').style.display = 'none';
+      document.getElementById('app').style.display = 'grid';
+      
+      const name = user.displayName || "Kullanıcı";
+      const initial = name.charAt(0).toUpperCase();
+
+      document.getElementById('desktopAvatar').innerText = initial;
+      document.getElementById('composerAvatar').innerText = initial;
+      document.getElementById('desktopUserName').innerText = name;
+      document.getElementById('desktopUserHandle').innerText = "@" + (user.email ? user.email.split('@')[0] : "kullanici");
+    }
+
+    function showAuthScreen() {
+      document.getElementById('authOverlay').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+    }
+
+    window.addPost = () => {
       const input = document.getElementById('postInput');
       const text = input.value.trim();
       if (!text) return;
-      const handle = "@" + (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : "user");
-      const name = auth.currentUser.displayName || "Aura";
 
-      try {
-        await addDoc(collection(db, "aura_posts"), {
-          uid: auth.currentUser.uid, author: name, handle: handle, content: text, likes: 0, createdAt: serverTimestamp()
-        });
-        input.value = "";
-      } catch (e) { alert("Paylaşım başarısız."); }
+      const currentUser = JSON.parse(localStorage.getItem('aura_active_user')) || { displayName: "Kullanıcı", email: "kullanici@aura.com" };
+      const authorName = currentUser.displayName;
+      const handle = "@" + currentUser.email.split('@')[0];
+
+      let posts = JSON.parse(localStorage.getItem('aura_posts')) || [];
+      posts.unshift({ author: authorName, handle: handle, content: text, likes: 0 });
+      localStorage.setItem('aura_posts', JSON.stringify(posts));
+      input.value = "";
+      loadLocalPosts();
     };
 
-    function loadPosts() {
-      const q = query(collection(db, "aura_posts"), orderBy("createdAt", "desc"));
-      onSnapshot(q, (snapshot) => {
-        document.getElementById('feedLoading').style.display = 'none';
-        const feed = document.getElementById('feed');
-        feed.innerHTML = ""; 
-
-        snapshot.forEach((doc) => {
-          const post = doc.data();
-          const initial = post.author ? post.author[0].toUpperCase() : 'A';
-          const r1 = Math.floor(Math.random() * 50); const r2 = Math.floor(Math.random() * 20); const r3 = Math.floor(Math.random() * 1000);
-          
-          const div = document.createElement('div');
-          div.className = 'post-card';
-          div.innerHTML = `
-            <div class="post-avatar">${initial}</div>
-            <div class="post-content">
-              <div class="post-meta">
-                <div class="post-meta-left">
-                  <h4>${post.author} <i class="fa-solid fa-circle-check verified-badge"></i></h4>
-                  <span>${post.handle || '@user'} · Şimdi</span>
-                </div>
-                <i class="fa-solid fa-ellipsis" style="color:var(--text-200); cursor:pointer;"></i>
-              </div>
-              <div class="post-text">${escapeHTML(post.content)}</div>
-              <div class="post-engagement">
-                <div class="eng-btn"><i class="fa-regular fa-comment"></i> ${r1}</div>
-                <div class="eng-btn repost"><i class="fa-solid fa-retweet"></i> ${r2}</div>
-                <div class="eng-btn like" onclick="this.classList.toggle('liked');"><i class="fa-solid fa-heart"></i> ${post.likes || 0}</div>
-                <div class="eng-btn"><i class="fa-solid fa-chart-simple"></i> ${r3}</div>
-                <div class="eng-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
-              </div>
-            </div>
-          `;
-          feed.appendChild(div);
-        });
+    function loadLocalPosts() {
+      const feed = document.getElementById('feedContainer');
+      const posts = JSON.parse(localStorage.getItem('aura_posts')) || [
+        { author: "Aura Resmi", handle: "@aura", content: "Aura Ultra X'e hoş geldiniz! Yeni nesil deneyim şimdi aktif.", likes: 42 }
+      ];
+      
+      feed.innerHTML = "";
+      posts.forEach(post => {
+        renderPostCard(feed, post);
       });
     }
 
-    function escapeHTML(str) {
-      if(!str) return ""; return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+    function renderPostCard(container, post) {
+      const initial = post.author ? post.author.charAt(0).toUpperCase() : 'A';
+      const div = document.createElement('div');
+      div.className = 'post-card';
+      div.innerHTML = `
+        <div class="user-avatar" style="width: 42px; height: 42px; font-size: 1rem; flex-shrink: 0;">${initial}</div>
+        <div class="post-main-content">
+          <div class="post-user-info">
+            <h4>${post.author}</h4>
+            <i class="fa-solid fa-circle-check verified-icon"></i>
+            <span>${post.handle || '@kullanici'}</span>
+          </div>
+          <div class="post-body-text">${escapeHTML(post.content)}</div>
+          <div class="post-actions-row">
+            <div class="post-action-btn"><i class="fa-regular fa-comment"></i> 0</div>
+            <div class="post-action-btn"><i class="fa-solid fa-retweet"></i> 0</div>
+            <div class="post-action-btn" onclick="this.classList.toggle('liked');"><i class="fa-solid fa-heart"></i> ${post.likes || 0}</div>
+            <div class="post-action-btn"><i class="fa-solid fa-chart-simple"></i></div>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
     }
+
+    function escapeHTML(str) {
+      if (!str) return "";
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    // Uygulama Başlangıcı
+    checkAuth();
   </script>
 </body>
 </html>
