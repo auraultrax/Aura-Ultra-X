@@ -3,432 +3,405 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura Ultra X</title>
-  <!-- Google Fonts & FontAwesome -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>Aura Ultra X | Sınırları Aş</title>
+  
+  <!-- Fontlar ve İkonlar -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    /* ----- DEĞİŞKENLER VE TEMEL AYARLAR ----- */
     :root {
-      --bg-color: #0b0f19;
-      --card-bg: #151c2c;
-      --accent-color: #6366f1;
-      --accent-hover: #4f46e5;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border-color: #243048;
-      --danger-color: #ef4444;
+      --bg-base: #000000;
+      --bg-panel: #111111;
+      --bg-hover: #1c1c1c;
+      --accent: #7c3aed; /* Aura Moru */
+      --accent-hover: #6d28d9;
+      --accent-glow: rgba(124, 58, 237, 0.4);
+      --text-main: #f9fafb;
+      --text-muted: #6b7280;
+      --border: #27272a;
+      --danger: #e11d48;
+      --success: #10b981;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
+    /* Özel Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
     body {
-      background-color: var(--bg-color);
+      background-color: var(--bg-base);
       color: var(--text-main);
+      overflow-x: hidden;
       display: flex;
+      justify-content: center;
+    }
+
+    /* ----- YÜKLEME / GİRİŞ EKRANI (AUTH OVERLAY) ----- */
+    #authOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(15px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       flex-direction: column;
+    }
+
+    .auth-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 3rem;
+      border-radius: 24px;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 0 50px var(--accent-glow);
+      animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .auth-box h1 { font-size: 2.5rem; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .auth-box h1 i { color: var(--accent); }
+    .auth-box p { color: var(--text-muted); margin-bottom: 30px; font-size: 1.1rem; line-height: 1.5; }
+
+    .google-btn {
+      background: white; color: black; border: none; padding: 15px 30px;
+      font-size: 1.1rem; font-weight: 700; border-radius: 50px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 12px; width: 100%; transition: all 0.3s ease;
+    }
+    .google-btn:hover { background: #e5e7eb; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,255,255,0.1); }
+    .google-btn img { width: 24px; }
+
+    /* ----- ANA DÜZEN (APP CONTAINER) ----- */
+    #app {
+      display: none; /* Giriş yapınca grid olacak */
+      width: 100%;
+      max-width: 1280px;
+      grid-template-columns: 275px 1fr 350px;
       min-height: 100vh;
     }
 
-    /* Header Navbar */
-    header {
-      background-color: var(--card-bg);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    /* --- SOL MENÜ (SIDEBAR) --- */
+    .sidebar {
+      padding: 20px;
+      border-right: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 100;
-    }
-
-    .logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent-color);
+      height: 100vh;
       display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      letter-spacing: 0.5px;
+      flex-direction: column;
     }
 
-    .user-profile-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+    .logo { font-size: 2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 20px; }
+    .logo i { color: var(--accent); text-shadow: 0 0 20px var(--accent-glow); }
+
+    .nav-links { list-style: none; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .nav-links li a {
+      display: flex; align-items: center; gap: 20px; padding: 15px 20px;
+      color: var(--text-main); text-decoration: none; font-size: 1.25rem; font-weight: 500;
+      border-radius: 50px; transition: 0.2s;
+    }
+    .nav-links li a:hover, .nav-links li a.active { background: var(--bg-hover); }
+    .nav-links li a.active { font-weight: 700; }
+    .nav-links li a i { font-size: 1.5rem; width: 30px; text-align: center; }
+
+    .btn-aura {
+      background: var(--accent); color: white; border: none; padding: 15px;
+      border-radius: 50px; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+      margin-top: 20px; transition: 0.3s; box-shadow: 0 8px 25px var(--accent-glow);
+    }
+    .btn-aura:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+    .user-mini-profile {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px; border-radius: 50px; cursor: pointer; transition: 0.2s; margin-top: 20px;
+    }
+    .user-mini-profile:hover { background: var(--bg-hover); }
+    .user-info-left { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(45deg, #7c3aed, #ec4899); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+    .user-name-box h4 { font-size: 1rem; margin-bottom: 2px; }
+    .user-name-box p { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* --- ORTA AKIŞ (MAIN FEED) --- */
+    .main-feed {
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .header-blur {
+      position: sticky; top: 0; background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px); padding: 15px 20px; z-index: 50;
+      border-bottom: 1px solid var(--border); font-size: 1.2rem; font-weight: 700;
     }
 
-    .logout-btn {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
+    /* Hikayeler (Stories) */
+    .stories-container {
+      display: flex; gap: 15px; padding: 20px; overflow-x: auto;
+      border-bottom: 1px solid var(--border);
     }
-
-    .logout-btn:hover {
-      border-color: var(--danger-color);
-      color: var(--danger-color);
+    .stories-container::-webkit-scrollbar { display: none; }
+    .story { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; min-width: 70px;}
+    .story-ring {
+      width: 65px; height: 65px; border-radius: 50%; padding: 3px;
+      background: linear-gradient(45deg, #f97316, #ec4899, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
     }
-
-    /* Auth Overlay / Kilitli Ekran */
-    #authOverlay {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex: 1;
-      padding: 2rem 1rem;
+    .story-ring img, .story-ring .avatar-placeholder {
+      width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--bg-base);
+      background: var(--bg-panel); display: flex; align-items: center; justify-content: center; font-weight: bold;
     }
+    .story p { font-size: 0.8rem; color: var(--text-muted); }
 
-    .auth-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 420px;
-      padding: 2.5rem;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-      text-align: center;
+    /* Gönderi Oluşturucu */
+    .composer { padding: 20px; border-bottom: 1px solid var(--border); display: flex; gap: 15px; }
+    .composer-right { flex: 1; }
+    .composer textarea {
+      width: 100%; background: transparent; border: none; color: var(--text-main);
+      font-size: 1.2rem; resize: none; min-height: 60px; outline: none; margin-top: 10px;
     }
-
-    .auth-card h2 {
-      margin-bottom: 0.5rem;
-      font-size: 1.8rem;
+    .composer-tools {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 15px; border-top: 1px solid var(--border); margin-top: 10px;
     }
-
-    .auth-card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 2rem;
+    .tool-icons { display: flex; gap: 15px; color: var(--accent); font-size: 1.2rem; }
+    .tool-icons i { cursor: pointer; transition: 0.2s; padding: 8px; border-radius: 50%; }
+    .tool-icons i:hover { background: var(--accent-glow); }
+    .btn-post {
+      background: var(--accent); color: white; border: none; padding: 10px 25px;
+      border-radius: 50px; font-weight: 700; cursor: pointer; transition: 0.2s;
     }
+    .btn-post:hover { background: var(--accent-hover); }
 
-    .tab-buttons {
-      display: flex;
-      background-color: var(--bg-color);
-      padding: 4px;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 0.6rem;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .tab-btn.active {
-      background-color: var(--card-bg);
-      color: var(--text-main);
-      font-weight: 600;
-    }
-
-    .input-group {
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 0.8rem 1rem;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-main);
-      outline: none;
-      font-size: 0.95rem;
-    }
-
-    .input-group input:focus {
-      border-color: var(--accent-color);
-    }
-
-    .submit-btn {
-      width: 100%;
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
-      padding: 0.8rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 0.5rem;
-    }
-
-    .submit-btn:hover {
-      background-color: var(--accent-hover);
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      margin: 1.5rem 0;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-
-    .divider::before, .divider::after {
-      content: "";
-      flex: 1;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .divider span {
-      padding: 0 0.8rem;
-    }
-
-    .google-btn {
-      width: 100%;
-      background-color: #ffffff;
-      color: #0f172a;
-      border: none;
-      padding: 0.8rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      transition: background 0.2s;
-    }
-
-    .google-btn:hover {
-      background-color: #e2e8f0;
-    }
-
-    /* Main Social Feed (Varsayılan olarak gizli) */
-    #mainContent {
-      display: none;
-      max-width: 700px;
-      width: 100%;
-      margin: 2rem auto;
-      padding: 0 1rem;
-      flex: 1;
-    }
-
-    .create-post {
-      background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 1.2rem;
-      margin-bottom: 2rem;
-      border: 1px solid var(--border-color);
-    }
-
-    .create-post textarea {
-      width: 100%;
-      height: 90px;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      resize: none;
-      font-size: 1rem;
-      outline: none;
-    }
-
-    .post-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-top: 1px solid var(--border-color);
-      padding-top: 0.8rem;
-      margin-top: 0.5rem;
-    }
-
+    /* Post Kartları */
     .post-card {
-      background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid var(--border-color);
-      animation: fadeIn 0.3s ease-in-out;
+      padding: 20px; border-bottom: 1px solid var(--border);
+      transition: background 0.2s; display: flex; gap: 15px; cursor: pointer;
     }
+    .post-card:hover { background: var(--bg-panel); }
+    .post-content-area { flex: 1; }
+    .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    .post-author { display: flex; align-items: center; gap: 8px; }
+    .post-author h4 { font-size: 1rem; }
+    .post-author h4:hover { text-decoration: underline; }
+    .post-author span { color: var(--text-muted); font-size: 0.9rem; }
+    .post-text { font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px; white-space: pre-wrap;}
+    
+    .post-actions { display: flex; justify-content: space-between; max-width: 400px; color: var(--text-muted); }
+    .action-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem;}
+    .action-btn:hover { color: var(--accent); }
+    .action-btn.like-btn:hover, .action-btn.liked { color: var(--danger); }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* --- SAĞ PANEL (WIDGETS) --- */
+    .right-sidebar { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    
+    .search-bar {
+      background: var(--bg-panel); border-radius: 50px; padding: 15px 25px;
+      display: flex; align-items: center; gap: 15px; border: 1px solid var(--border);
     }
+    .search-bar input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 1rem; }
+    .search-bar i { color: var(--text-muted); }
 
-    .post-header {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 1rem;
+    .widget {
+      background: var(--bg-panel); border-radius: 20px; padding: 20px;
+      border: 1px solid var(--border);
     }
+    .widget h3 { font-size: 1.2rem; margin-bottom: 15px; font-weight: 800; }
+    .trend-item { margin-bottom: 15px; cursor: pointer; }
+    .trend-item:last-child { margin-bottom: 0; }
+    .trend-item p.category { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px;}
+    .trend-item h4 { font-size: 1rem; margin-bottom: 2px; }
+    .trend-item p.stats { font-size: 0.85rem; color: var(--text-muted); }
+    
+    .follow-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;}
+    .follow-item:last-child { margin-bottom: 0; }
+    .btn-follow { background: white; color: black; border: none; padding: 8px 16px; border-radius: 50px; font-weight: 600; cursor: pointer; }
 
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background-color: var(--accent-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: white;
+    /* Responsive */
+    @media (max-width: 1024px) {
+      #app { grid-template-columns: 80px 1fr; }
+      .right-sidebar { display: none; }
+      .sidebar .logo span, .nav-links li a span, .user-name-box, .btn-aura { display: none; }
+      .nav-links li a { justify-content: center; padding: 15px; }
+      .btn-aura { width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; }
+      .btn-aura::after { content: '\f067'; font-family: 'Font Awesome 6 Free'; font-weight: 900; }
     }
-
-    .user-info .name {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .user-info .time {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .post-content {
-      line-height: 1.5;
-      margin-bottom: 1rem;
-      color: #e2e8f0;
-    }
-
-    .post-footer {
-      display: flex;
-      gap: 1.5rem;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      border-top: 1px solid var(--border-color);
-      padding-top: 0.8rem;
-    }
-
-    .action-btn {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: color 0.2s;
-    }
-
-    .action-btn:hover {
-      color: var(--accent-color);
-    }
-
-    footer {
-      text-align: center;
-      padding: 1.5rem;
-      border-top: 1px solid var(--border-color);
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      background-color: var(--card-bg);
-    }
-
-    footer span {
-      color: var(--accent-color);
-      font-weight: 600;
+    @media (max-width: 600px) {
+      #app { grid-template-columns: 1fr; padding-bottom: 60px; }
+      .sidebar { position: fixed; bottom: 0; top: auto; width: 100%; height: 60px; flex-direction: row; justify-content: space-around; padding: 10px; border-right: none; border-top: 1px solid var(--border); background: var(--bg-base); z-index: 100;}
+      .nav-links { flex-direction: row; justify-content: space-around; width: 100%; }
+      .logo, .user-mini-profile, .btn-aura { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo">
-      <i class="fa-solid fa-bolt-lightning"></i> Aura Ultra X
-    </div>
-    <div class="user-profile-header" id="headerProfile" style="display: none;">
-      <span id="headerUserName" style="font-size: 0.9rem; color: var(--text-muted);"></span>
-      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</button>
-    </div>
-  </header>
-
-  <!-- KİLİTLİ GİRİŞ / KAYIT EKRANI (Giriş yapılmadan asla geçilemez) -->
+  <!-- KİLİTLİ GİRİŞ EKRANI -->
   <div id="authOverlay">
-    <div class="auth-card">
-      <h2>Aura Ultra X</h2>
-      <p>Aka katılmak ve içerikleri görmek için giriş yapın veya kayıt olun.</p>
-
-      <div class="tab-buttons">
-        <button class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">Giriş Yap</button>
-        <button class="tab-btn" id="registerTabBtn" onclick="switchTab('register')">Kayıt Ol</button>
-      </div>
-
-      <form id="authForm" onsubmit="handleAuth(event)">
-        <div class="input-group" id="nameGroup" style="display: none;">
-          <input type="text" id="authName" placeholder="Ad Soyad veya Kullanıcı Adı">
-        </div>
-        <div class="input-group">
-          <input type="email" id="authEmail" placeholder="E-posta Adresi" required>
-        </div>
-        <div class="input-group">
-          <input type="password" id="authPassword" placeholder="Şifre" required>
-        </div>
-        <button type="submit" class="submit-btn" id="submitBtn">Giriş Yap</button>
-      </form>
-
-      <div class="divider">
-        <span>VEYA</span>
-      </div>
-
+    <div class="auth-box">
+      <h1><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra X</h1>
+      <p>Yeni nesil sosyal medyaya adım at. Gündemi belirle, kendi auranı yarat.</p>
       <button class="google-btn" onclick="loginWithGoogle()">
-        <i class="fa-brands fa-google"></i> Google ile Devam Et
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G"> 
+        Google ile Devam Et
       </button>
     </div>
   </div>
 
-  <!-- ANA SOSYAL MEDYA AKIŞI (Sadece giriş yapıldığında görünür) -->
-  <div id="mainContent">
-    <div class="create-post">
-      <textarea id="postInput" placeholder="Aura Ultra X ağında neler paylaşmak istersin?"></textarea>
-      <div class="post-actions">
-        <span style="color: var(--text-muted); font-size: 0.85rem;" id="userStatus"></span>
-        <button class="submit-btn" style="width: auto; padding: 0.6rem 1.5rem;" onclick="addPost()">Paylaş</button>
+  <!-- ANA UYGULAMA (Giriş sonrası açılır) -->
+  <div id="app">
+    
+    <!-- SOL MENÜ -->
+    <nav class="sidebar">
+      <div class="logo">
+        <i class="fa-solid fa-bolt-lightning"></i> <span>Aura</span>
       </div>
-    </div>
+      <ul class="nav-links">
+        <li><a href="#" class="active"><i class="fa-solid fa-house"></i> <span>Ana Sayfa</span></a></li>
+        <li><a href="#"><i class="fa-solid fa-hashtag"></i> <span>Keşfet</span></a></li>
+        <li><a href="#"><i class="fa-regular fa-bell"></i> <span>Bildirimler</span></a></li>
+        <li><a href="#"><i class="fa-regular fa-envelope"></i> <span>Mesajlar</span></a></li>
+        <li><a href="#"><i class="fa-regular fa-bookmark"></i> <span>Yer İşaretleri</span></a></li>
+        <li><a href="#"><i class="fa-regular fa-user"></i> <span>Profil</span></a></li>
+      </ul>
+      <button class="btn-aura" onclick="document.getElementById('postInput').focus()">Aura Paylaş</button>
 
-    <div id="feed">
-      <!-- Gönderiler buraya dinamik gelecek -->
-    </div>
+      <div class="user-mini-profile" onclick="logout()" title="Çıkış Yapmak İçin Tıkla">
+        <div class="user-info-left">
+          <div class="avatar" id="myAvatar">A</div>
+          <div class="user-name-box">
+            <h4 id="myUserName">Kullanıcı</h4>
+            <p id="myUserHandle">@kullanici</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-ellipsis" style="color: var(--text-muted);"></i>
+      </div>
+    </nav>
+
+    <!-- ORTA AKIŞ -->
+    <main class="main-feed">
+      <div class="header-blur">Ana Sayfa</div>
+
+      <!-- Hikayeler (Stories UI) -->
+      <div class="stories-container">
+        <div class="story">
+          <div class="story-ring"><div class="avatar-placeholder"><i class="fa-solid fa-plus"></i></div></div>
+          <p>Ekle</p>
+        </div>
+        <div class="story"><div class="story-ring"><div class="avatar-placeholder" style="background:#10b981;">E</div></div><p>elonmusk</p></div>
+        <div class="story"><div class="story-ring"><div class="avatar-placeholder" style="background:#3b82f6;">M</div></div><p>mrbeast</p></div>
+        <div class="story"><div class="story-ring"><div class="avatar-placeholder" style="background:#f43f5e;">A</div></div><p>aurateam</p></div>
+        <div class="story"><div class="story-ring"><div class="avatar-placeholder" style="background:#8b5cf6;">C</div></div><p>cr7</p></div>
+      </div>
+
+      <!-- Gönderi Oluşturucu -->
+      <div class="composer">
+        <div class="avatar" id="composerAvatar">U</div>
+        <div class="composer-right">
+          <textarea id="postInput" placeholder="Neler oluyor? Kendi Auranı yansıt..."></textarea>
+          <div class="composer-tools">
+            <div class="tool-icons">
+              <i class="fa-regular fa-image" title="Medya"></i>
+              <i class="fa-solid fa-gif" title="GIF"></i>
+              <i class="fa-regular fa-face-smile" title="Emoji"></i>
+              <i class="fa-solid fa-location-dot" title="Konum"></i>
+            </div>
+            <button class="btn-post" onclick="addPost()">Gönder</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Realtime Akış -->
+      <div id="feed">
+        <!-- Firebase'den gelen gönderiler buraya eklenecek -->
+      </div>
+    </main>
+
+    <!-- SAĞ PANEL -->
+    <aside class="right-sidebar">
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Aura'da Ara">
+      </div>
+
+      <div class="widget">
+        <h3>İlgini Çekebilecek Gündemler</h3>
+        <div class="trend-item">
+          <p class="category">Teknoloji · Gündemdekiler</p>
+          <h4>#AuraUltraX</h4>
+          <p class="stats">125 B Gönderi</p>
+        </div>
+        <div class="trend-item">
+          <p class="category">Spor · Gündemdekiler</p>
+          <h4>Şampiyonlar Ligi</h4>
+          <p class="stats">85 B Gönderi</p>
+        </div>
+        <div class="trend-item">
+          <p class="category">Müzik · Gündemdekiler</p>
+          <h4>Yeni Albüm Çıktı</h4>
+          <p class="stats">42 B Gönderi</p>
+        </div>
+      </div>
+
+      <div class="widget">
+        <h3>Kimi Takip Etmeli</h3>
+        <div class="follow-item">
+          <div class="user-info-left">
+            <div class="avatar" style="background: #3b82f6;">G</div>
+            <div class="user-name-box">
+              <h4>Gemini AI</h4>
+              <p>@gemini</p>
+            </div>
+          </div>
+          <button class="btn-follow">Takip Et</button>
+        </div>
+        <div class="follow-item">
+          <div class="user-info-left">
+            <div class="avatar" style="background: #10b981;">A</div>
+            <div class="user-name-box">
+              <h4>Aura Official</h4>
+              <p>@auraultrax</p>
+            </div>
+          </div>
+          <button class="btn-follow">Takip Et</button>
+        </div>
+      </div>
+      
+      <p style="color: var(--text-muted); font-size: 0.8rem; padding: 0 10px;">
+        © 2026 Aura Ultra X Corporation. Tüm hakları saklıdır. Powered by Gemini.
+      </p>
+    </aside>
   </div>
 
-  <footer>
-    <p>Powered by <span>Gemini</span> &copy; 2026 Aura Ultra X</p>
-  </footer>
-
-  <!-- Firebase SDK Entegrasyonu -->
+  <!-- FIREBASE (Backend - Cloud Console Gerektirmez) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithPopup, 
-      GoogleAuthProvider, 
-      createUserWithEmailAndPassword, 
-      signInWithEmailAndPassword, 
-      updateProfile,
-      signOut, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      onSnapshot, 
-      query, 
-      orderBy, 
-      serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase Konsolundan alacağın kendi yapılandırma bilgilerini buraya yapıştır!
+    // BURAYA KENDİ FIREBASE CONFIG BİLGİLERİNİ YAPIŞTIR
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "SENIN_API_KEY",
+      authDomain: "SENIN_PROJEN.firebaseapp.com",
+      projectId: "SENIN_PROJEN_ID",
+      storageBucket: "SENIN_PROJEN.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -436,142 +409,125 @@
     const db = getFirestore(app);
     const googleProvider = new GoogleAuthProvider();
 
-    let currentMode = 'login'; // 'login' veya 'register'
-
-    // Tab Değiştirme
-    window.switchTab = (mode) => {
-      currentMode = mode;
-      const loginBtn = document.getElementById('loginTabBtn');
-      const registerBtn = document.getElementById('registerTabBtn');
-      const nameGroup = document.getElementById('nameGroup');
-      const submitBtn = document.getElementById('submitBtn');
-
-      if (mode === 'register') {
-        loginBtn.classList.remove('active');
-        registerBtn.classList.add('active');
-        nameGroup.style.display = 'block';
-        submitBtn.innerText = 'Kayıt Ol';
-      } else {
-        registerBtn.classList.remove('active');
-        loginBtn.classList.add('active');
-        nameGroup.style.display = 'none';
-        submitBtn.innerText = 'Giriş Yap';
-      }
-    };
-
-    // E-posta / Şifre Form İşlemi
-    window.handleAuth = async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-      const name = document.getElementById('authName').value;
-
-      try {
-        if (currentMode === 'register') {
-          const res = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(res.user, { displayName: name });
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
-      } catch (error) {
-        alert("Hata: " + error.message);
-      }
-    };
-
-    // Google ile Giriş
+    // 1. Google ile Giriş İşlemi
     window.loginWithGoogle = async () => {
       try {
         await signInWithPopup(auth, googleProvider);
       } catch (error) {
-        alert("Google Giriş Hatası: " + error.message);
+        console.error("Giriş başarısız:", error);
+        alert("Giriş yapılırken bir hata oluştu. Lütfen kodu Live Server veya sunucuda çalıştırdığınızdan emin olun.");
       }
     };
 
-    // Çıkış Yap
+    // 2. Çıkış İşlemi
     window.logout = async () => {
-      await signOut(auth);
+      if(confirm("Aura'dan çıkış yapmak istiyor musun?")) {
+        await signOut(auth);
+      }
     };
 
-    // Oturum Kontrolü (Giriş yapılmadıysa ana sayfayı TAMAMEN gizler)
+    // 3. Oturum Dinleyici (UI Değişimi)
     onAuthStateChanged(auth, (user) => {
       const authOverlay = document.getElementById('authOverlay');
-      const mainContent = document.getElementById('mainContent');
-      const headerProfile = document.getElementById('headerProfile');
-      const headerUserName = document.getElementById('headerUserName');
-      const userStatus = document.getElementById('userStatus');
-
+      const appDiv = document.getElementById('app');
+      
       if (user) {
-        // Giriş Yapılmışsa Ana Sayfayı Göster
         authOverlay.style.display = 'none';
-        mainContent.style.display = 'block';
-        headerProfile.style.display = 'flex';
-        headerUserName.innerText = user.displayName || user.email;
-        userStatus.innerText = `${user.displayName || user.email} olarak paylaşıyorsun`;
+        appDiv.style.display = 'grid'; // Grid layout'u aktif et
         
-        // Akışı Dinlemeye Başla
+        // Kullanıcı verilerini UI'a bas
+        const initial = user.displayName ? user.displayName[0].toUpperCase() : 'U';
+        document.getElementById('myAvatar').innerText = initial;
+        document.getElementById('composerAvatar').innerText = initial;
+        document.getElementById('myUserName').innerText = user.displayName;
+        
+        // E-postadan handle türetme (örn: ahmet@gmail.com -> @ahmet)
+        const handle = "@" + (user.email ? user.email.split('@')[0] : "kullanici");
+        document.getElementById('myUserHandle').innerText = handle;
+
         loadPosts();
       } else {
-        // Giriş Yapılmamışsa Sadece Giriş Ekranını Göster
         authOverlay.style.display = 'flex';
-        mainContent.style.display = 'none';
-        headerProfile.style.display = 'none';
+        appDiv.style.display = 'none';
       }
     });
 
-    // Gönderi Paylaşma
+    // 4. Gönderi Paylaşma
     window.addPost = async () => {
       const input = document.getElementById('postInput');
       const text = input.value.trim();
-
       if (!text) return;
 
+      const handle = "@" + (auth.currentUser.email ? auth.currentUser.email.split('@')[0] : "kullanici");
+
       try {
-        await addDoc(collection(db, "posts"), {
+        await addDoc(collection(db, "aura_posts"), {
           uid: auth.currentUser.uid,
-          author: auth.currentUser.displayName || auth.currentUser.email.split('@')[0],
+          author: auth.currentUser.displayName,
+          handle: handle,
           content: text,
-          createdAt: serverTimestamp(),
-          likes: 0
+          likes: 0,
+          createdAt: serverTimestamp()
         });
         input.value = "";
       } catch (error) {
         console.error("Paylaşım hatası:", error);
+        alert("Bağlantı hatası. Firestore veritabanı kurallarınızı kontrol edin.");
       }
     };
 
-    // Firestore Canlı Akış Dinleyici
+    // 5. Canlı Akış (Realtime Load) ve UI Yaratımı
     function loadPosts() {
-      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "aura_posts"), orderBy("createdAt", "desc"));
+      
       onSnapshot(q, (snapshot) => {
         const feed = document.getElementById('feed');
-        feed.innerHTML = "";
-
-        if (snapshot.empty) {
-          feed.innerHTML = `<p style="text-align: center; color: var(--text-muted);">Henüz hiç gönderi yok. İlk paylaşımı sen yap!</p>`;
-          return;
-        }
+        feed.innerHTML = ""; // Temizle
 
         snapshot.forEach((doc) => {
           const post = doc.data();
+          const initial = post.author ? post.author[0].toUpperCase() : 'A';
+          
+          // Rastgele İstatistikler (UI zengin görünsün diye)
+          const randomComments = Math.floor(Math.random() * 50);
+          const randomRetweets = Math.floor(Math.random() * 20);
+          const randomViews = Math.floor(Math.random() * 1000) + 100;
+
+          // HTML Şablonu
           const postElement = document.createElement('div');
           postElement.className = 'post-card';
           postElement.innerHTML = `
-            <div class="post-header">
-              <div class="avatar">${post.author ? post.author[0].toUpperCase() : 'A'}</div>
-              <div class="user-info">
-                <div class="name">${post.author || 'Aura Kullanıcısı'}</div>
-                <div class="time">Canlı Akış</div>
+            <div class="avatar">${initial}</div>
+            <div class="post-content-area">
+              <div class="post-header">
+                <div class="post-author">
+                  <h4>${post.author}</h4>
+                  <span>${post.handle} · Şimdi</span>
+                </div>
+                <i class="fa-solid fa-ellipsis" style="color: var(--text-muted); cursor:pointer;"></i>
               </div>
-            </div>
-            <div class="post-content">${post.content}</div>
-            <div class="post-footer">
-              <div class="action-btn"><i class="fa-regular fa-heart"></i> ${post.likes || 0}</div>
-              <div class="action-btn"><i class="fa-regular fa-comment"></i> 0</div>
+              <div class="post-text">${escapeHTML(post.content)}</div>
+              
+              <div class="post-actions">
+                <div class="action-btn"><i class="fa-regular fa-comment"></i> ${randomComments}</div>
+                <div class="action-btn"><i class="fa-solid fa-retweet"></i> ${randomRetweets}</div>
+                <div class="action-btn like-btn" onclick="this.classList.toggle('liked'); this.querySelector('i').classList.toggle('fa-regular'); this.querySelector('i').classList.toggle('fa-solid');"><i class="fa-regular fa-heart"></i> ${post.likes || Math.floor(Math.random() * 100)}</div>
+                <div class="action-btn"><i class="fa-solid fa-chart-simple"></i> ${randomViews}</div>
+                <div class="action-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+              </div>
             </div>
           `;
           feed.appendChild(postElement);
         });
       });
+    }
+
+    // XSS Koruması
+    function escapeHTML(str) {
+      if(!str) return "";
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
     }
   </script>
 </body>
