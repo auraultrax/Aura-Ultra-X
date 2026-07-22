@@ -342,12 +342,41 @@
         .google-btn:hover { background:#f4f4f4; }
         #regionField { display:none; }
         #googleStatus { display:none; font-size:.85rem; color:var(--text-muted); margin-bottom:10px; text-align:center; }
+        #kvkkModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.82); align-items:center; justify-content:center; padding:18px; }
+        #kvkkModal.show { display:flex; }
+        .kvkk-box { width:min(720px,100%); max-height:88vh; overflow:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+        .kvkk-box h2 { margin-top:0; }
+        .kvkk-text { max-height:45vh; overflow:auto; padding:16px; background:rgba(0,0,0,.18); border-radius:12px; line-height:1.65; color:var(--text-muted); }
+        .kvkk-check { display:flex; gap:10px; align-items:flex-start; margin:16px 0; cursor:pointer; }
+        .kvkk-actions { display:flex; gap:10px; justify-content:flex-end; }
 </style>
 </head>
 <body>
 
     <!-- TOAST NOTIFICATION ALANI -->
     <div id="toastContainer"></div>
+
+    <!-- ZORUNLU KVKK BİLGİLENDİRME EKRANI -->
+    <div id="kvkkModal" role="dialog" aria-modal="true" aria-labelledby="kvkkTitle">
+        <div class="kvkk-box">
+            <h2 id="kvkkTitle">KVKK ve Gizlilik Bilgilendirmesi</h2>
+            <div class="kvkk-text">
+                <p><strong>Aura Ultra X</strong> hesabınızı oluştururken verdiğiniz bilgiler, hesabınızı oluşturmak ve platformun güvenliğini sağlamak amacıyla işlenebilir.</p>
+                <p>Güvenlik ve kötüye kullanımı önleme amacıyla ağ/IP ve cihaz bilgileri, mümkün olan ölçüde hashlenmiş veya teknik güvenlik kimliği olarak işlenebilir. Bu bilgiler kullanıcılar arasında herkese açık şekilde gösterilmez.</p>
+                <p>Google hesabı ile kayıt sırasında Google tarafından sağlanan hesap kimliği, hesabınızı eşleştirmek amacıyla kullanılabilir. Gereksiz kişisel veriler mümkün olduğunca toplanmamalıdır.</p>
+                <p>Veriler yalnızca belirli ve meşru amaçlarla, amaçla bağlantılı ve ölçülü şekilde işlenmeli; gerekli olmayan veriler gereksiz yere saklanmamalıdır.</p>
+                <p>Verilerinizle ilgili bilgi almak veya haklarınızı kullanmak için uygulama yöneticisiyle iletişime geçebilirsiniz. Bu ekran bir bilgilendirme metnidir; gerçek kullanıma açmadan önce bir ebeveyn/veli ve gerektiğinde hukuk uzmanı tarafından gözden geçirilmelidir.</p>
+            </div>
+            <label class="kvkk-check">
+                <input type="checkbox" id="kvkkReadCheck">
+                <span>KVKK ve Gizlilik Bilgilendirmesini okudum ve anladım.</span>
+            </label>
+            <div class="kvkk-actions">
+                <button class="btn btn-outline" onclick="rejectKvkk()">Reddet</button>
+                <button class="btn" onclick="acceptKvkk()">Okudum ve Devam Et</button>
+            </div>
+        </div>
+    </div>
 
     <!-- AUTH OVERLAY -->
     <div id="authOverlay">
@@ -496,6 +525,15 @@
                         </div>
                     </div>
                     
+                    <div style="background:var(--bg-surface); border:1px solid var(--border); padding:20px; border-radius:16px; margin-bottom:24px;">
+                        <h2 style="margin-bottom:15px; font-size:1.2rem; font-weight:800;"><i class="fa-solid fa-circle-check" style="color:var(--verified);"></i> Mavi Tik Yönetimi</h2>
+                        <input type="text" id="verifiedUsernameInput" class="input-box" placeholder="Mavi tik verilecek kullanıcı adı">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn" onclick="grantVerified()"><i class="fa-solid fa-circle-check"></i> Mavi Tik Ver</button>
+                            <button class="btn btn-outline" onclick="removeVerified()"><i class="fa-solid fa-circle-xmark"></i> Mavi Tiki Kaldır</button>
+                        </div>
+                    </div>
+
                     <h2 style="margin-bottom: 15px; font-size: 1.2rem; font-weight: 800;">İnceleme Bekleyen Şikayetler</h2>
                     <div class="report-list" id="adminReportsContainer"></div>
                 </div>
@@ -537,6 +575,7 @@
 
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         let pendingGoogleUser = null;
+        let kvkkAcceptedForRegistration = false;
         let currentNetwork = { ip: null, ipHash: null, deviceHash: null };
         async function sha256(value) { const data = new TextEncoder().encode(value || ''); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join(''); }
         async function getNetworkIdentity() {
@@ -548,6 +587,8 @@
             } catch (e) { return { ip: null, ipHash: null, deviceHash: await sha256([navigator.userAgent, navigator.platform].join('|')) }; }
         }
         async function isBannedNetwork(identity) {
+            // Admin hesabı ağ/cihaz banlarından muaftır.
+            if (typeof currentUser !== 'undefined' && currentUser === ADMIN_USER) return false;
             if (!identity) return false;
             if (identity.ipHash && (await firestore.collection('bannedIPs').doc(identity.ipHash).get()).exists) return true;
             if (identity.deviceHash && (await firestore.collection('bannedDevices').doc(identity.deviceHash).get()).exists) return true;
@@ -562,8 +603,32 @@
             if (pendingGoogleUser) document.getElementById('googleStatus').innerText = `Google hesabı seçildi: ${pendingGoogleUser.email || 'hesap'}`;
         }
         async function googleRegister() {
-            try { const result = await firebase.auth().signInWithPopup(googleProvider); pendingGoogleUser = result.user; updateAuthForm(); showToast('Google hesabı seçildi. Kullanıcı adı, şifre ve bölgeni doldur.', 'success'); }
-            catch (e) { console.error(e); showToast('Google ile kayıt başarısız: ' + (e.code || e.message), 'error'); }
+            try {
+                const result = await firebase.auth().signInWithPopup(googleProvider);
+                pendingGoogleUser = result.user;
+                kvkkAcceptedForRegistration = false;
+                document.getElementById('kvkkReadCheck').checked = false;
+                updateAuthForm();
+                document.getElementById('kvkkModal').classList.add('show');
+            } catch (e) { console.error(e); showToast('Google ile kayıt başarısız: ' + (e.code || e.message), 'error'); }
+        }
+
+        function acceptKvkk() {
+            if (!document.getElementById('kvkkReadCheck').checked) {
+                showToast('Devam etmek için bilgilendirme metnini okuduğunuzu onaylayın.', 'error');
+                return;
+            }
+            kvkkAcceptedForRegistration = true;
+            document.getElementById('kvkkModal').classList.remove('show');
+            showToast('Bilgilendirme tamamlandı. Kayıt formunu doldurabilirsiniz.', 'success');
+        }
+
+        function rejectKvkk() {
+            kvkkAcceptedForRegistration = false;
+            pendingGoogleUser = null;
+            document.getElementById('kvkkModal').classList.remove('show');
+            updateAuthForm();
+            showToast('Bilgilendirme kabul edilmedi. Kayıt işlemi iptal edildi.', 'error');
         }
     </script>
     <script>
@@ -669,13 +734,13 @@
             await firebaseReady; updateAuthForm();
             if (currentUser && !db.banned.includes(currentUser)) {
                 currentNetwork = await getNetworkIdentity();
-                if (await isBannedNetwork(currentNetwork)) { alert('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); return; }
+                if (currentUser !== ADMIN_USER && await isBannedNetwork(currentNetwork)) { alert('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); return; }
                 setupAppUI();
             } else if (db.banned.includes(currentUser)) { alert('Bu hesap kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); }
         };
 
         function toggleAuthMode() {
-            isLoginMode = !isLoginMode; pendingGoogleUser = null;
+            isLoginMode = !isLoginMode; pendingGoogleUser = null; kvkkAcceptedForRegistration = false;
             document.getElementById('authSwitchText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
             updateAuthForm();
         }
@@ -687,10 +752,11 @@
             const region = document.getElementById('regionField').value;
             if (!u || !p) return showToast('Kullanıcı adı ve şifre gereklidir.', 'error');
             if (!isLoginMode && !region) return showToast('Kayıt olmak için bölgenizi seçin.', 'error');
+            if (!isLoginMode && !kvkkAcceptedForRegistration) return showToast('Önce zorunlu KVKK ve Gizlilik Bilgilendirmesini tamamlayın.', 'error');
             if (db.banned.includes(u)) return showToast('Bu kullanıcı adı yasaklanmıştır.', 'error');
             try {
                 currentNetwork = await getNetworkIdentity();
-                if (await isBannedNetwork(currentNetwork)) return showToast('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.', 'error');
+                if (u !== ADMIN_USER && await isBannedNetwork(currentNetwork)) return showToast('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.', 'error');
                 const ref = firestore.collection('users').doc(u); const snap = await ref.get();
                 if (isLoginMode) {
                     if (snap.exists && snap.data().password === p) { await ref.update({ lastIpHash: currentNetwork.ipHash || null, lastDeviceHash: currentNetwork.deviceHash || null, lastSeenAt: Date.now() }); loginSuccess(u); }
@@ -723,7 +789,7 @@
             document.getElementById('sidebarAvatar').innerText = currentUser.charAt(0).toUpperCase();
             
             // Mavi tik kontrolü profil isminde de gösterilsin
-            const userBadge = (currentUser === ADMIN_USER) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
+            const userBadge = (currentUser === ADMIN_USER || db.users[currentUser]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
             document.getElementById('sidebarUsername').innerHTML = `${currentUser} ${userBadge}`;
             
             if (currentUser === ADMIN_USER) {
@@ -823,7 +889,7 @@
                 const uData = db.users[post.author];
                 
                 // MAVİ TİK: A_UR_A_XX kullanıcısına özel zorunlu ikon
-                const isVerified = (post.author === ADMIN_USER) ? `<i class="fa-solid fa-circle-check verified-badge" title="Sistem Yöneticisi / Onaylı Hesap"></i>` : '';
+                const isVerified = (post.author === ADMIN_USER || uData?.verified) ? `<i class="fa-solid fa-circle-check verified-badge" title="Onaylı Hesap"></i>` : '';
                 const isLider = uData && uData.isLider && post.author !== ADMIN_USER ? `<span class="lider-badge">LİDER 1</span>` : '';
                 
                 const imgHtml = post.image ? `<div class="post-img-container"><img src="${post.image}" class="post-img"></div>` : '';
@@ -1020,7 +1086,7 @@
                 const me = m.author === currentUser;
                 const img = m.img ? `<img src="${m.img}" class="chat-img">` : '';
                 const admin = m.author === r.admin ? `<i class="fa-solid fa-crown msg-admin-badge"></i>` : '';
-                const verified = m.author === ADMIN_USER ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
+                const verified = (m.author === ADMIN_USER || db.users[m.author]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
                 const evts = `onmousedown="startPress('${m.id}')" onmouseup="endPress()" onmouseleave="endPress()" ontouchstart="startPress('${m.id}')" ontouchend="endPress()"`;
                 c.innerHTML += `<div class="chat-msg ${me?'me':'others'}"><div class="msg-info">${m.author} ${verified} ${admin}</div><div class="msg-bubble" ${evts}>${m.text || ''}${img}</div></div>`;
             });
@@ -1130,7 +1196,7 @@
             return `
                 <div class="podium-item rank-${rank}">
                     <div class="podium-rank">${rank}</div>
-                    <div class="podium-name">@${user.username}</div>
+                    <div class="podium-name">@${user.username} ${(db.users[user.username]?.verified || user.username === ADMIN_USER) ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : ''}</div>
                     <div class="podium-votes">${user.votes} Oy</div>
                 </div>
             `;
@@ -1205,6 +1271,30 @@
                 db.reports.splice(reportIndex, 1); saveDB(); renderAdminPanel();
                 showToast(`${username} hesabı, kayıtlı ağ/cihaz kimliğiyle birlikte kalıcı olarak engellendi!`, 'success');
             } catch (e) { console.error(e); showToast('Ban işlemi başarısız: ' + (e.code || e.message), 'error'); }
+        }
+
+        async function grantVerified() {
+            if (currentUser !== ADMIN_USER) return showToast("Bu işlem yalnızca admin içindir.", "error");
+            const username = document.getElementById('verifiedUsernameInput').value.trim();
+            if (!username) return showToast("Kullanıcı adı yazın.", "error");
+            const ref = firestore.collection('users').doc(username);
+            const snap = await ref.get();
+            if (!snap.exists) return showToast("Bu kullanıcı bulunamadı.", "error");
+            await ref.update({ verified: true, verifiedAt: Date.now(), verifiedBy: ADMIN_USER });
+            document.getElementById('verifiedUsernameInput').value = '';
+            showToast(`@${username} artık mavi tikli!`, "success");
+        }
+
+        async function removeVerified() {
+            if (currentUser !== ADMIN_USER) return showToast("Bu işlem yalnızca admin içindir.", "error");
+            const username = document.getElementById('verifiedUsernameInput').value.trim();
+            if (!username) return showToast("Kullanıcı adı yazın.", "error");
+            const ref = firestore.collection('users').doc(username);
+            const snap = await ref.get();
+            if (!snap.exists) return showToast("Bu kullanıcı bulunamadı.", "error");
+            await ref.update({ verified: false });
+            document.getElementById('verifiedUsernameInput').value = '';
+            showToast(`@${username} için mavi tik kaldırıldı.`, "success");
         }
 
         function ignoreReport(index) {
