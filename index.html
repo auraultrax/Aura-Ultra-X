@@ -872,13 +872,46 @@
             await firestore.collection('posts').doc(post.id).update({ likedBy });
         }
 
-        function voteUser(username) {
+        async function voteUser(username) {
+            if (!currentUser) return showToast("Önce giriş yapmalısınız.", "error");
             if (username === currentUser) return showToast("Kendinize oy veremezsiniz!", "error");
             if (username === ADMIN_USER) return showToast("Sistem yöneticisi oylamaya tabi değildir.", "error");
-            const newVotes = (db.users[username].votes || 0) + 1;
-            firestore.collection('users').doc(username).update({ votes: newVotes }).then(() => {
+
+            try {
+                await firebaseReady;
+                const voteId = `${currentUser}__${username}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const voteRef = firestore.collection('votes').doc(voteId);
+                const userRef = firestore.collection('users').doc(username);
+
+                await firestore.runTransaction(async (transaction) => {
+                    const voteSnap = await transaction.get(voteRef);
+                    if (voteSnap.exists) throw new Error('ALREADY_VOTED');
+
+                    const userSnap = await transaction.get(userRef);
+                    if (!userSnap.exists) throw new Error('USER_NOT_FOUND');
+
+                    const currentVotes = userSnap.data().votes || 0;
+                    transaction.set(voteRef, {
+                        voter: currentUser,
+                        target: username,
+                        createdAt: Date.now()
+                    });
+                    transaction.update(userRef, { votes: currentVotes + 1 });
+                });
+
+                if (db.users[username]) db.users[username].votes = (db.users[username].votes || 0) + 1;
+                saveDB();
+                renderLeaderboard();
+                loadFeed();
                 showToast(`@${username} kullanıcısına oy verildi!`);
-            }).catch(e => { console.error(e); showToast("Oy kaydedilemedi.", "error"); });
+            } catch (e) {
+                if (e.message === 'ALREADY_VOTED') {
+                    showToast('Bu kullanıcıya zaten oy verdiniz.', 'error');
+                } else {
+                    console.error(e);
+                    showToast('Oy verilemedi: ' + (e.message || 'Bilinmeyen hata'), 'error');
+                }
+            }
         }
 
         function loadFeed() {
