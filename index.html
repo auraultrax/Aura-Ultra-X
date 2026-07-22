@@ -515,10 +515,13 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script>
         const firebaseConfig = { apiKey: "AIzaSyD0TzdTpxB6vsSHLw2CWx7LZh9qQWDAPqY", authDomain: "aura-ultra-x.firebaseapp.com", projectId: "aura-ultra-x", storageBucket: "aura-ultra-x.firebasestorage.app", messagingSenderId: "931526439447", appId: "1:931526439447:web:06aa1a89e0ad98407f6252" };
         firebase.initializeApp(firebaseConfig);
         const firestore = firebase.firestore();
+        // Firebase oturumu: Firestore kuralları request.auth gerektiriyorsa erişim sağlar.
+        let firebaseReady = firebase.auth().signInAnonymously().catch(err => { console.error("Firebase Auth:", err); });
     </script>
     <script>
         /* ==========================================================================
@@ -552,14 +555,27 @@
             users: JSON.parse(localStorage.getItem('aurax_users')) || {},
             banned: JSON.parse(localStorage.getItem('aurax_banned')) || [],
             posts: JSON.parse(localStorage.getItem('aurax_posts')) || [],
-            rooms: JSON.parse(localStorage.getItem('aurax_rooms')) || {},
+            rooms: {},
             reports: JSON.parse(localStorage.getItem('aurax_reports')) || []
         };
 
-        // Yöneticinin Hesabını Otomatik Kaydet
-        if (!db.users[ADMIN_USER]) {
-            db.users[ADMIN_USER] = { password: ADMIN_PASS, votes: 0, isLider: true };
-        }
+        // Firebase kullanıcı senkronizasyonu
+        firestore.collection('users').onSnapshot(snapshot => {
+            db.users = {};
+            snapshot.forEach(doc => db.users[doc.id] = doc.data());
+            localStorage.setItem('aurax_users', JSON.stringify(db.users));
+            if (currentUser) {
+                renderLeaderboard();
+                loadFeed();
+            }
+        });
+
+        // Admin hesabını Firebase'e bir kez yaz
+        firestore.collection('users').doc(ADMIN_USER).get().then(doc => {
+            if (!doc.exists) {
+                return firestore.collection('users').doc(ADMIN_USER).set({ password: ADMIN_PASS, votes: 0, isLider: true });
+            }
+        }).catch(console.error);
 
         function saveDB() {
             localStorage.setItem('aurax_users', JSON.stringify(db.users));
@@ -607,22 +623,27 @@
             document.getElementById('authSwitchText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
         }
 
-        function handleAuth() {
+        async function handleAuth() {
+            await firebaseReady;
             const u = document.getElementById('authUsername').value.trim();
             const p = document.getElementById('authPassword').value.trim();
             if (!u || !p) return showToast("Kullanıcı adı ve şifre gereklidir.", "error");
-            
             if (db.banned.includes(u)) return showToast("Bu kullanıcı adı yasaklanmıştır.", "error");
 
-            if (isLoginMode) {
-                if (db.users[u] && db.users[u].password === p) {
+            try {
+                const ref = firestore.collection('users').doc(u);
+                const snap = await ref.get();
+                if (isLoginMode) {
+                    if (snap.exists && snap.data().password === p) loginSuccess(u);
+                    else showToast("Hatalı kullanıcı adı veya şifre.", "error");
+                } else {
+                    if (snap.exists) return showToast("Bu kullanıcı adı önceden alınmış.", "error");
+                    await ref.set({ password: p, votes: 0, isLider: false, createdAt: Date.now() });
                     loginSuccess(u);
-                } else showToast("Hatalı kullanıcı adı veya şifre.", "error");
-            } else {
-                if (db.users[u]) return showToast("Bu kullanıcı adı önceden alınmış.", "error");
-                db.users[u] = { password: p, votes: 0, isLider: false };
-                saveDB();
-                loginSuccess(u);
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Firebase bağlantı hatası. Firestore'u etkinleştir.", "error");
             }
         }
 
@@ -735,11 +756,10 @@
         function voteUser(username) {
             if (username === currentUser) return showToast("Kendinize oy veremezsiniz!", "error");
             if (username === ADMIN_USER) return showToast("Sistem yöneticisi oylamaya tabi değildir.", "error");
-            db.users[username].votes = (db.users[username].votes || 0) + 1;
-            saveDB();
-            showToast(`@${username} kullanıcısına oy verildi!`);
-            renderLeaderboard();
-            loadFeed();
+            const newVotes = (db.users[username].votes || 0) + 1;
+            firestore.collection('users').doc(username).update({ votes: newVotes }).then(() => {
+                showToast(`@${username} kullanıcısına oy verildi!`);
+            }).catch(e => { console.error(e); showToast("Oy kaydedilemedi.", "error"); });
         }
 
         function loadFeed() {
@@ -854,7 +874,8 @@
         let roomUnsubscribe = null;
         let activeRoomData = null;
 
-        function createRoom() {
+        async function createRoom() {
+            await firebaseReady;
             const n = document.getElementById('newRoomName').value.trim();
             const p = document.getElementById('newRoomPass').value;
             if (!n || !p) return showToast("Oda adı ve şifre zorunludur.", "error");
@@ -866,7 +887,8 @@
             }).catch(e => { console.error(e); showToast("Oda oluşturulamadı.", "error"); });
         }
 
-        function joinRoom() {
+        async function joinRoom() {
+            await firebaseReady;
             const n = document.getElementById('joinRoomName').value.trim();
             const p = document.getElementById('joinRoomPass').value;
             if (!n || !p) return showToast("Oda adı ve şifre zorunludur.", "error");
@@ -923,7 +945,8 @@
             c.scrollTop = c.scrollHeight;
         }
 
-        function sendChatMessage() {
+        async function sendChatMessage() {
+            await firebaseReady;
             if (!activeRoom || !activeRoomData) return;
             if ((activeRoomData.muted || []).includes(currentUser) && currentUser !== ADMIN_USER) return showToast("Oda yöneticisi tarafından engellendiniz.", "error");
             const text = document.getElementById('chatInput').value.trim();
