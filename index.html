@@ -521,7 +521,7 @@
         firebase.initializeApp(firebaseConfig);
         const firestore = firebase.firestore();
         // Firebase oturumu: Firestore kuralları request.auth gerektiriyorsa erişim sağlar.
-        let firebaseReady = firebase.auth().signInAnonymously().catch(err => { console.error("Firebase Auth:", err); });
+        let firebaseReady = firebase.auth().currentUser ? Promise.resolve(firebase.auth().currentUser) : firebase.auth().signInAnonymously().then(result => result.user).catch(err => { console.error('Firebase Auth:', err); throw err; });
     </script>
     <script>
         /* ==========================================================================
@@ -897,16 +897,34 @@
         }
 
         async function createRoom() {
-            await firebaseReady;
-            const n = document.getElementById('newRoomName').value.trim();
-            const p = document.getElementById('newRoomPass').value;
-            if (!n || !p) return showToast("Oda adı ve şifre zorunludur.", "error");
-            firestore.collection('rooms').doc(n).get().then(doc => {
-                if (doc.exists) return showToast("Bu isimde bir oda zaten mevcut.", "error");
-                return firestore.collection('rooms').doc(n).set({ password:p, admin:currentUser, members:[currentUser], muted:[], messages:[], createdAt:Date.now() }).then(() => {
-                    showToast('Oda başarıyla kuruldu!'); enterRoomUI(n);
+            try {
+                await firebaseReady;
+                const n = document.getElementById('newRoomName').value.trim();
+                const p = document.getElementById('newRoomPass').value;
+                if (!n || !p) return showToast("Oda adı ve şifre zorunludur.", "error");
+                const roomRef = firestore.collection('rooms').doc(n);
+                const existing = await roomRef.get();
+                if (existing.exists) return showToast("Bu isimde bir oda zaten mevcut.", "error");
+                await roomRef.set({
+                    password: p,
+                    admin: currentUser,
+                    members: [currentUser],
+                    muted: [],
+                    messages: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-            }).catch(e => { console.error(e); showToast("Oda oluşturulamadı.", "error"); });
+                showToast('Oda başarıyla kuruldu!');
+                enterRoomUI(n);
+            } catch (e) {
+                console.error('ODA OLUŞTURMA HATASI:', e);
+                if (e && (e.code === 'permission-denied' || e.code === 'PERMISSION_DENIED')) {
+                    showToast('Firebase izin vermedi. Firestore Rules kontrol edilmeli.', 'error');
+                } else if (e && e.code === 'auth/operation-not-allowed') {
+                    showToast('Firebase Anonymous girişini etkinleştir.', 'error');
+                } else {
+                    showToast('Oda oluşturulamadı: ' + (e.message || 'Bilinmeyen hata'), 'error');
+                }
+            }
         }
 
         async function joinRoom() {
