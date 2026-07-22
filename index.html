@@ -1,818 +1,92 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aura Ultra X | VIP Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* ==========================================================================
-           ROOT VARIABLES & GLOBAL STYLES
-           ========================================================================== */
-        :root {
-            --bg-base: #050507;
-            --bg-surface: #121216;
-            --bg-surface-hover: #1a1a20;
-            --bg-glass: rgba(18, 18, 22, 0.75);
-            --border: #27272e;
-            --border-light: #3f3f48;
-            --primary: #8b5cf6;
-            --primary-hover: #7c3aed;
-            --accent: #ec4899;
-            --text-main: #f9fafb;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --success: #10b981;
-            --verified: #3b82f6;
-            --gold: #fbbf24;
-            --sidebar-width: 280px;
-            --shadow-neon: 0 0 20px rgba(139, 92, 246, 0.35);
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            overflow-x: hidden;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
-        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        .glass {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: var(--shadow-neon); }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #dc2626; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        .btn-outline:hover { background: rgba(139, 92, 246, 0.1); }
-
-        .input-box {
-            width: 100%;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 14px 16px;
-            border-radius: 12px;
-            font-size: 1rem;
-            outline: none;
-            transition: var(--transition);
-            margin-bottom: 15px;
-        }
-        .input-box:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
-
-        /* TOAST BİLDİRİM */
-        #toastContainer { position: fixed; top: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-surface); border-left: 4px solid var(--primary); color: white; padding: 15px 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.3s ease forwards; min-width: 260px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .toast.error { border-left-color: var(--danger); }
-        .toast.success { border-left-color: var(--success); }
-        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
-
-        /* ==========================================================================
-           AUTH SCREEN
-           ========================================================================== */
-        #authOverlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at top left, #1e0c38 0%, var(--bg-base) 60%);
-            z-index: 10000;
-            display: flex; justify-content: center; align-items: center; padding: 20px;
-        }
-        .auth-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            width: 100%; max-width: 420px;
-            padding: 3rem 2rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .auth-logo { font-size: 2.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .auth-logo i { color: var(--primary); text-shadow: var(--shadow-neon); }
-        .auth-switch { margin-top: 1.5rem; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
-        .auth-switch span { color: var(--primary); font-weight: 700; }
-        .auth-switch:hover { color: var(--text-main); }
-
-        /* ==========================================================================
-           APP LAYOUT & SIDEBAR
-           ========================================================================== */
-        #app {
-            display: none; width: 100%; max-width: 1200px;
-            grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            position: sticky; top: 0; height: 100vh;
-            border-right: 1px solid var(--border);
-            padding: 2rem 1.5rem;
-            display: flex; flex-direction: column; justify-content: space-between;
-            background: var(--bg-base);
-            z-index: 50;
-        }
-        .brand { font-size: 2rem; font-weight: 800; margin-bottom: 2.5rem; color: var(--text-main); display: flex; align-items: center; gap: 12px; padding-left: 5px; }
-        .brand i { color: var(--primary); text-shadow: var(--shadow-neon); }
-        
-        .nav-menu { display: flex; flex-direction: column; gap: 10px; }
-        .nav-link {
-            display: flex; align-items: center; gap: 16px;
-            padding: 14px 18px;
-            color: var(--text-muted); text-decoration: none;
-            font-size: 1.1rem; font-weight: 600;
-            border-radius: 14px; cursor: pointer; transition: var(--transition);
-        }
-        .nav-link:hover { background: var(--bg-surface-hover); color: var(--text-main); }
-        .nav-link.active { background: var(--primary); color: white; box-shadow: var(--shadow-neon); }
-        .nav-link i { width: 22px; text-align: center; font-size: 1.2rem; }
-        
-        .user-profile-btn {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px; background: var(--bg-surface);
-            border: 1px solid var(--border); border-radius: 16px;
-            margin-bottom: 12px;
-        }
-        .user-avatar-mini {
-            width: 42px; height: 42px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 1.2rem; color: white; flex-shrink: 0;
-        }
-        .user-info-mini { flex: 1; overflow: hidden; }
-        .user-info-mini h4 { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-        .user-info-mini p { font-size: 0.8rem; color: var(--text-muted); }
-        
-        .main-content { min-height: 100vh; position: relative; border-right: 1px solid var(--border); }
-        .view-section { display: none; padding-bottom: 50px; animation: fadeIn 0.3s ease; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        .header-sticky {
-            position: sticky; top: 0;
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 1.3rem; font-weight: 800;
-            z-index: 10;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        /* ==========================================================================
-           KEŞFET (FEED)
-           ========================================================================== */
-        .composer { padding: 1.5rem; border-bottom: 1px solid var(--border); background: var(--bg-surface); }
-        .composer textarea { width: 100%; background: transparent; border: none; color: white; resize: none; min-height: 80px; outline: none; font-size: 1.15rem; }
-        .composer-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }
-        .tool-icons { display: flex; gap: 15px; }
-        .tool-icons label { color: var(--primary); cursor: pointer; font-size: 1.3rem; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
-        .tool-icons label:hover { color: var(--primary-hover); transform: scale(1.05); }
-        .tool-icons span { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-
-        .post-card { padding: 1.5rem; border-bottom: 1px solid var(--border); transition: var(--transition); }
-        .post-card:hover { background: rgba(255,255,255,0.015); }
-        .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .post-user { display: flex; align-items: center; gap: 12px; }
-        .post-user-info { display: flex; flex-direction: column; }
-        .post-user-name { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
-        
-        .verified-badge { color: var(--verified); font-size: 1.05rem; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5)); }
-        .lider-badge { background: linear-gradient(45deg, #fbbf24, #d97706); color: black; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 4px; }
-        .post-time { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-        
-        .btn-vote { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 14px; border-radius: 99px; font-size: 0.85rem; cursor: pointer; font-weight: 700; transition: var(--transition); }
-        .btn-vote:hover { background: var(--accent); color: white; box-shadow: 0 0 12px rgba(236, 72, 153, 0.4); }
-
-        .post-text { font-size: 1.05rem; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 12px; }
-        
-        .post-actions { display: flex; gap: 25px; margin-top: 15px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 12px; }
-        .action-item { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: var(--transition); font-weight: 600; font-size: 0.95rem; }
-        .action-item:hover { color: var(--primary); }
-        .action-item.liked { color: var(--danger); }
-        .action-item.liked i { font-weight: 900; }
-
-        /* ==========================================================================
-           ODALAR (SEKMELİ MİMARİ)
-           ========================================================================== */
-        .room-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-surface); }
-        .room-tab-btn { flex: 1; padding: 16px; text-align: center; background: transparent; border: none; color: var(--text-muted); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: var(--transition); position: relative; }
-        .room-tab-btn.active { color: var(--primary); }
-        .room-tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: var(--primary); border-radius: 3px 3px 0 0; }
-        
-        .room-tab-content { padding: 2.5rem 1.5rem; display: none; animation: fadeIn 0.3s ease; }
-        .room-tab-content.active { display: block; }
-        .room-form-card { background: var(--bg-surface); border: 1px solid var(--border); padding: 2.5rem 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 420px; margin: 0 auto; }
-        .room-form-card i { font-size: 2.8rem; color: var(--primary); margin-bottom: 1rem; }
-
-        /* ODA CHAT */
-        #roomChatArea { display: none; height: 100vh; flex-direction: column; background: var(--bg-base); position: absolute; top: 0; left: 0; width: 100%; z-index: 20; }
-        .chat-header { padding: 1.2rem 1.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1.15rem; }
-        .chat-header-actions { display: flex; gap: 10px; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 15px; }
-        
-        .chat-msg { max-width: 78%; display: flex; flex-direction: column; }
-        .chat-msg.others { align-self: flex-start; }
-        .chat-msg.me { align-self: flex-end; }
-        .msg-bubble { padding: 12px 18px; border-radius: 18px; position: relative; cursor: pointer; transition: transform 0.15s; word-wrap: break-word; font-size: 1rem; line-height: 1.4; }
-        .msg-bubble:active { transform: scale(0.98); }
-        .others .msg-bubble { background: var(--bg-surface-hover); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-        .me .msg-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
-        
-        .msg-info { font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted); display: flex; gap: 6px; align-items: center; }
-        .me .msg-info { justify-content: flex-end; }
-        
-        .chat-input-area { padding: 15px; background: var(--bg-surface); border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
-        .chat-input-area .input-box { margin-bottom: 0; border-radius: 99px; }
-
-        /* ==========================================================================
-           LİDERLİK TABLOSU
-           ========================================================================== */
-        .leaderboard-wrap { padding: 2rem; }
-        .podium { display: flex; align-items: flex-end; justify-content: center; gap: 15px; margin-bottom: 3rem; margin-top: 2rem; height: 210px; }
-        .podium-item { display: flex; flex-direction: column; align-items: center; width: 30%; background: var(--bg-surface); border-top-left-radius: 16px; border-top-right-radius: 16px; position: relative; justify-content: flex-end; padding-bottom: 20px; transition: var(--transition); border: 1px solid var(--border); border-bottom: none; }
-        .podium-item:hover { filter: brightness(1.15); }
-        .podium-rank { position: absolute; top: -20px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; background: var(--bg-base); border: 2px solid; }
-        .rank-1 { height: 100%; border-color: #fbbf24; background: linear-gradient(to top, rgba(251,191,36,0.12), transparent); }
-        .rank-1 .podium-rank { border-color: #fbbf24; color: #fbbf24; }
-        .rank-2 { height: 75%; border-color: #94a3b8; }
-        .rank-2 .podium-rank { border-color: #94a3b8; color: #94a3b8; }
-        .rank-3 { height: 60%; border-color: #b45309; }
-        .rank-3 .podium-rank { border-color: #b45309; color: #b45309; }
-        .podium-name { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; text-align: center; word-break: break-all; padding: 0 8px; display: flex; align-items: center; gap: 4px; justify-content: center; }
-        .podium-votes { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
-
-        /* ==========================================================================
-           YÖNETİM PANELİ (MODERASYON)
-           ========================================================================== */
-        .admin-dashboard { padding: 2rem; }
-        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 2rem; }
-        .stat-card { background: var(--bg-surface); border: 1px solid var(--border); padding: 20px; border-radius: 16px; display: flex; align-items: center; gap: 15px; }
-        .stat-card i { font-size: 2.2rem; color: var(--primary); }
-        .stat-info h3 { font-size: 1.8rem; font-weight: 900; }
-        .stat-info p { color: var(--text-muted); font-size: 0.85rem; }
-        
-        .report-list { display: flex; flex-direction: column; gap: 15px; }
-        .report-item { background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.25); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-        .report-details { flex: 1; }
-        .report-tag { display: inline-block; background: var(--danger); color: white; padding: 3px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; }
-
-        /* IOS ACTION MENU */
-        #actionSheetOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; display: none; opacity: 0; transition: opacity 0.25s; }
-        #actionSheetOverlay.show { display: block; opacity: 1; }
-        #actionSheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #1c1c20; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
-        #actionSheet.show { transform: translateY(0); }
-        .action-title { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; font-weight: 600; }
-        .action-btn { background: #2c2c32; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 1rem; font-weight: 600; width: 100%; cursor: pointer; transition: var(--transition); }
-        .action-btn:hover { background: #383840; }
-        .action-btn.danger { color: #ff453a; }
-        .action-btn.cancel { font-weight: 700; background: white; color: black; margin-top: 6px; }
-
-        /* MOBİL ALT MENÜ */
-        .mobile-bottom-nav {
-            display: none; position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(10, 10, 12, 0.92); backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border); z-index: 1000;
-            justify-content: space-around; padding: 14px 0; padding-bottom: env(safe-area-inset-bottom, 14px);
-        }
-        .mobile-nav-item { color: var(--text-muted); font-size: 1.4rem; text-decoration: none; transition: var(--transition); cursor: pointer;}
-        .mobile-nav-item.active { color: var(--primary); transform: translateY(-2px); }
-
-        @media (max-width: 900px) {
-            #app { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
-            .mobile-bottom-nav { display: flex; }
-            .main-content { border-right: none; padding-bottom: 80px; }
-            .auth-card { padding: 2rem 1.5rem; border: none; background: transparent; box-shadow: none; }
-            #authOverlay { background: var(--bg-base); }
-            .podium { gap: 6px; }
-            .podium-name { font-size: 0.85rem; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aura Ultra X | Yeni Nesil Sosyal Ekosistem</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg-base:#000;--bg-surface:#0a0a0c;--bg-surface-hover:#16161a;--border:#222228;--primary:#7c3aed;--primary-hover:#6d28d9;--accent:#ec4899;--text-main:#f9fafb;--text-muted:#71717a;--danger:#ef4444;--success:#10b981;--sidebar-width:275px;--right-panel-width:350px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg-base)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+body{background:var(--bg-base);color:var(--text-main);overflow-x:hidden;min-height:100vh}
+button{font:inherit}.hidden{display:none!important}
+#authOverlay{position:fixed;inset:0;background:var(--bg-base);z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px}
+.auth-card{background:var(--bg-surface);border:1px solid var(--border);width:100%;max-width:440px;padding:2.5rem;border-radius:24px;box-shadow:0 20px 50px rgba(124,58,237,.15);text-align:center}
+.auth-logo{font-size:2.5rem;font-weight:800;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:12px}.auth-logo i{color:var(--primary);text-shadow:0 0 20px rgba(124,58,237,.5)}.auth-subtitle{color:var(--text-muted);font-size:.95rem;margin-bottom:2rem}
+.auth-input-group{position:relative;margin-bottom:1rem;text-align:left}.auth-input-group i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted)}.auth-input{width:100%;background:var(--bg-base);border:1px solid var(--border);color:var(--text-main);padding:14px 16px 14px 45px;border-radius:12px;font-size:1rem;outline:none}.auth-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+.btn-auth-main,.primary-btn{width:100%;background:var(--primary);color:#fff;border:0;padding:14px;border-radius:12px;font-weight:700;cursor:pointer}.btn-auth-main:hover,.primary-btn:hover{background:var(--primary-hover)}
+.auth-switch-text{margin-top:1.5rem;color:var(--text-muted);font-size:.9rem;cursor:pointer}.auth-switch-text span{color:var(--primary);font-weight:700}
+#app{display:none;width:100%;max-width:1300px;margin:auto;grid-template-columns:var(--sidebar-width) minmax(0,1fr) var(--right-panel-width);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;padding:1.5rem 1rem;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between}.sidebar-top{display:flex;flex-direction:column;gap:5px}.app-brand{font-size:1.8rem;font-weight:800;padding:.5rem 1rem 1.5rem;display:flex;align-items:center;gap:10px}.app-brand i{color:var(--primary)}
+.nav-link{display:flex;align-items:center;gap:18px;padding:12px 16px;color:var(--text-main);text-decoration:none;font-size:1.05rem;font-weight:500;border-radius:99px;cursor:pointer}.nav-link:hover,.nav-link.active{background:var(--bg-surface-hover);color:var(--primary);font-weight:700}.nav-link i{font-size:1.25rem;width:25px;text-align:center}.btn-sidebar-post{background:var(--primary);color:#fff;border:0;padding:14px;border-radius:99px;font-size:1.05rem;font-weight:700;cursor:pointer;width:100%;margin-top:1rem}
+.user-profile-badge{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:99px;cursor:pointer}.user-profile-badge:hover{background:var(--bg-surface-hover)}.user-info-wrapper{display:flex;align-items:center;gap:10px;overflow:hidden}.user-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1rem;flex-shrink:0}.user-text-box h4{font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.user-text-box p{font-size:.8rem;color:var(--text-muted)}
+.main-feed-container{border-right:1px solid var(--border);min-height:100vh;padding-bottom:80px}.feed-header-sticky{position:sticky;top:0;background:rgba(0,0,0,.88);backdrop-filter:blur(12px);padding:1rem 1.5rem;z-index:100;border-bottom:1px solid var(--border);font-size:1.25rem;font-weight:800;display:flex;justify-content:space-between}.page{display:none}.page.active{display:block}
+.composer-box{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;gap:15px}.composer-content{flex:1}.composer-textarea{width:100%;background:transparent;border:0;color:var(--text-main);font-size:1.1rem;resize:none;min-height:70px;outline:none;margin-top:8px}.composer-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px;margin-top:8px}.composer-icons{display:flex;gap:15px;color:var(--primary);font-size:1.2rem;cursor:pointer}.btn-post-submit{background:var(--primary);color:#fff;border:0;padding:8px 22px;border-radius:99px;font-weight:700;cursor:pointer}
+.post-card{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;gap:15px}.post-main-content{flex:1;overflow:hidden}.post-user-info{display:flex;align-items:center;gap:8px;margin-bottom:6px}.post-user-info h4{font-size:1rem}.post-user-info span{font-size:.85rem;color:var(--text-muted)}.leader-badge{font-size:.72rem;color:#fbbf24;border:1px solid #fbbf24;padding:2px 6px;border-radius:99px}.post-body-text{font-size:1.05rem;line-height:1.5;word-break:break-word;margin-bottom:12px;white-space:pre-wrap}.post-image{max-width:100%;border-radius:14px;margin:8px 0 12px;max-height:500px;object-fit:cover}.post-actions-row{display:flex;gap:28px;color:var(--text-muted)}.post-action-btn{display:flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}.post-action-btn:hover{color:var(--primary)}.post-action-btn.liked{color:var(--danger)}
+.comment-box{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}.comment{padding:8px 0;border-bottom:1px solid #17171b}.comment small{color:var(--text-muted)}.comment-actions{display:flex;gap:12px;margin-top:5px;font-size:.75rem;color:var(--primary);cursor:pointer}.comment-input-row{display:flex;gap:8px;margin-top:10px}.comment-input,.room-input{flex:1;background:var(--bg-base);border:1px solid var(--border);color:#fff;border-radius:10px;padding:10px;outline:none}.small-btn{background:var(--primary);border:0;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+.right-sidebar{padding:1.5rem;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh;overflow-y:auto}.search-input-wrapper{background:var(--bg-surface);border:1px solid var(--border);border-radius:99px;padding:12px 20px;display:flex;align-items:center;gap:12px}.search-input-wrapper input{background:transparent;border:0;outline:none;color:#fff;width:100%}.widget-card,.panel-card,.room-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem}.widget-card h3,.panel-card h3{font-size:1.1rem;margin-bottom:1rem}.trending-topic{margin-bottom:12px}.trending-topic span{font-size:.75rem;color:var(--text-muted)}.trending-topic h4{font-size:.95rem;margin-top:2px}
+.rooms-toolbar{display:flex;gap:10px;padding:1.2rem 1.5rem;border-bottom:1px solid var(--border)}.rooms-toolbar button{flex:1}.room-list{padding:1.2rem 1.5rem;display:grid;gap:12px}.room-card{cursor:pointer}.room-card:hover{border-color:var(--primary)}.room-card h3{margin-bottom:5px}.room-card small{color:var(--text-muted)}
+.room-view{padding:1.2rem 1.5rem}.room-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px}.room-messages{min-height:400px;max-height:55vh;overflow:auto;padding:10px 0}.message{padding:10px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer}.message small{color:var(--text-muted);display:block;margin-bottom:4px}.message img{max-width:260px;border-radius:10px;margin-top:8px}.room-compose{display:flex;gap:8px;margin-top:12px}.room-compose .room-input{min-width:0}.room-members{margin-top:16px;color:var(--text-muted);font-size:.9rem}.room-members b{color:#fff}
+.leaderboard{padding:1.2rem 1.5rem}.leader-row{display:flex;align-items:center;gap:14px;padding:14px;border-bottom:1px solid var(--border)}.leader-rank{font-size:1.5rem;font-weight:800;color:#fbbf24;width:35px}.leader-row .user-avatar{width:38px;height:38px}.vote-btn{margin-left:auto;background:transparent;border:1px solid var(--primary);color:var(--primary);padding:7px 12px;border-radius:99px;cursor:pointer}.vote-btn:hover{background:var(--primary);color:#fff}
+.admin-panel{padding:1.2rem 1.5rem}.report-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}.report-card p{margin:8px 0;color:#ddd}.admin-actions{display:flex;gap:8px;flex-wrap:wrap}.danger-btn{background:var(--danger);border:0;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}.muted-btn{background:var(--bg-surface-hover);border:1px solid var(--border);color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;width:100%;background:rgba(10,10,12,.95);backdrop-filter:blur(15px);border-top:1px solid var(--border);z-index:1000;justify-content:space-around;padding:12px 0}.mobile-nav-item{color:var(--text-muted);font-size:1.4rem;cursor:pointer}.mobile-nav-item.active{color:var(--primary)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px}.modal-card{width:100%;max-width:430px;background:var(--bg-surface);border:1px solid var(--border);border-radius:18px;padding:20px}.modal-card h2{margin-bottom:16px}.modal-card input{width:100%;margin-bottom:10px;background:var(--bg-base);border:1px solid var(--border);color:#fff;padding:12px;border-radius:10px}.modal-actions{display:flex;gap:10px;margin-top:12px}.modal-actions button{flex:1}
+@media(max-width:1024px){#app{grid-template-columns:80px 1fr}.sidebar{align-items:center}.app-brand span,.nav-link span,.btn-sidebar-post,.user-text-box{display:none}.right-sidebar{display:none}.sidebar{padding:1.5rem .5rem}.user-profile-badge{justify-content:center;padding:8px}}
+@media(max-width:768px){#app{grid-template-columns:1fr;padding-bottom:70px}.sidebar{display:none}.mobile-bottom-nav{display:flex}.main-feed-container{border-right:0}.auth-card{padding:1.5rem;border:0;background:transparent;box-shadow:none}.rooms-toolbar{flex-direction:column}}
+</style>
 </head>
 <body>
+<div id="authOverlay"><div class="auth-card"><div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura</div><p class="auth-subtitle" id="authSubtitle">Sınırları aş, kendi aurani yarat.</p><div class="auth-input-group" id="usernameGroup" style="display:none"><i class="fa-solid fa-user"></i><input type="text" id="usernameInput" class="auth-input" placeholder="Kullanıcı Adı"></div><div class="auth-input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="emailInput" class="auth-input" placeholder="E-posta Adresi"></div><div class="auth-input-group"><i class="fa-solid fa-lock"></i><input type="password" id="passwordInput" class="auth-input" placeholder="Şifre"></div><button class="btn-auth-main" id="authBtn">Giriş Yap</button><p class="auth-switch-text" id="authToggleText">Hesabın yok mu? <span>Kayıt Ol</span></p></div></div>
+<div id="app">
+<aside class="sidebar"><div class="sidebar-top"><div class="app-brand"><i class="fa-solid fa-bolt-lightning"></i><span>Aura</span></div><nav><a class="nav-link active" data-page="discover"><i class="fa-solid fa-compass"></i><span>Keşfet</span></a><a class="nav-link" data-page="rooms"><i class="fa-solid fa-comments"></i><span>Odalar</span></a><a class="nav-link" data-page="leadership"><i class="fa-solid fa-trophy"></i><span>Liderlik</span></a><a class="nav-link hidden" id="adminNav" data-page="admin"><i class="fa-solid fa-shield-halved"></i><span>Kontrol Paneli</span></a></nav><button class="btn-sidebar-post" id="focusPostBtn">Gönder</button></div><div class="user-profile-badge" id="logoutBtn"><div class="user-info-wrapper"><div class="user-avatar" id="desktopAvatar">A</div><div class="user-text-box"><h4 id="desktopUserName">Kullanıcı</h4><p id="desktopUserHandle">@kullanici</p></div></div><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i></div></aside>
+<main class="main-feed-container"><div class="feed-header-sticky"><span id="pageTitle">Keşfet</span><i class="fa-solid fa-sparkles" style="color:var(--primary)"></i></div>
+<section id="discoverPage" class="page active"><div class="composer-box"><div class="user-avatar" id="composerAvatar">A</div><div class="composer-content"><textarea id="postInput" class="composer-textarea" placeholder="Aura'da neler oluyor?"></textarea><div class="composer-footer"><div class="composer-icons"><label title="Fotoğraf Yükle"><i class="fa-regular fa-image"></i><input type="file" id="postImageInput" accept="image/*" hidden></label></div><button class="btn-post-submit" id="postSubmit">Paylaş</button></div></div></div><div id="feedContainer"></div></section>
+<section id="roomsPage" class="page"><div class="rooms-toolbar"><button class="primary-btn" id="createRoomBtn">Oda Ekle +</button><button class="primary-btn" id="joinRoomBtn">Odaya Gir →</button></div><div id="roomList" class="room-list"></div><div id="roomView" class="room-view hidden"></div></section>
+<section id="leadershipPage" class="page"><div class="leaderboard"><div class="panel-card"><h3>Bu Ayın Liderleri</h3><p style="color:var(--text-muted);font-size:.9rem">Ay sonuna kadar verilen oylar burada sıralanır. İlk 3 kullanıcı sonraki ay boyunca Lider rozeti taşır.</p></div><div id="leaderboardList" style="margin-top:14px"></div></div></section>
+<section id="adminPage" class="page"><div class="admin-panel"><div class="panel-card"><h3>Kontrol Paneli</h3><p style="color:var(--text-muted);font-size:.9rem">Şikayetleri ve yönetim işlemlerini buradan kontrol edebilirsin.</p></div><div id="reportsContainer" style="margin-top:14px"></div></div></section>
+</main>
+<aside class="right-sidebar"><div class="search-input-wrapper"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="Aura'da Ara"></div><div class="widget-card"><h3>Gündemdekiler</h3><div class="trending-topic"><span>Teknoloji · Gündemde</span><h4>#AuraUltraX</h4></div><div class="trending-topic"><span>Yazılım · Gündemde</span><h4>#WebDevelopment</h4></div></div></aside>
+</div>
+<div class="mobile-bottom-nav"><a class="mobile-nav-item active" data-page="discover"><i class="fa-solid fa-compass"></i></a><a class="mobile-nav-item" data-page="rooms"><i class="fa-solid fa-comments"></i></a><a class="mobile-nav-item" data-page="leadership"><i class="fa-solid fa-trophy"></i></a><a class="mobile-nav-item" id="mobileLogout"><i class="fa-regular fa-user"></i></a></div>
+<div id="modalRoot"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, push, onValue, update, remove, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-    <!-- TOAST NOTIFICATION ALANI -->
-    <div id="toastContainer"></div>
-
-    <!-- AUTH OVERLAY -->
-    <div id="authOverlay">
-        <div class="auth-card">
-            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra</div>
-            <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı Adı" autocomplete="off">
-            <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
-            <button class="btn" style="width: 100%; font-size: 1.05rem; padding: 14px;" id="authBtn" onclick="handleAuth()">Giriş Yap</button>
-            <p class="auth-switch" onclick="toggleAuthMode()" id="authSwitchText">Hesabın yok mu? <span>Kayıt Ol</span></p>
-        </div>
-    </div>
-
-    <!-- MAIN APP STRUCTURE -->
-    <div id="app">
-        
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
-            <div>
-                <div class="brand"><i class="fa-solid fa-bolt-lightning"></i> Aura</div>
-                <nav class="nav-menu">
-                    <a class="nav-link active" onclick="switchView('kesfet')"><i class="fa-solid fa-compass"></i> Keşfet</a>
-                    <a class="nav-link" onclick="switchView('odalar')"><i class="fa-solid fa-comments"></i> Odalar</a>
-                    <a class="nav-link" onclick="switchView('liderlik')"><i class="fa-solid fa-trophy"></i> Liderlik</a>
-                    <a class="nav-link" id="navAdmin" style="display:none; color: var(--danger);" onclick="switchView('yonetim')"><i class="fa-solid fa-shield-halved"></i> Yönetim</a>
-                </nav>
-            </div>
-            
-            <div>
-                <div class="user-profile-btn">
-                    <div class="user-avatar-mini" id="sidebarAvatar">U</div>
-                    <div class="user-info-mini">
-                        <h4 id="sidebarUsername">User</h4>
-                        <p id="sidebarRole">Kullanıcı</p>
-                    </div>
-                </div>
-                <button class="btn btn-outline" style="width: 100%;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
-            </div>
-        </aside>
-
-        <!-- CONTENT VIEWPORT -->
-        <main class="main-content">
-            
-            <!-- KEŞFET -->
-            <section id="view-kesfet" class="view-section active">
-                <div class="header-sticky glass">Akış <i class="fa-solid fa-sparkles" style="color:var(--primary); font-size: 0.9rem; margin-left:5px;"></i></div>
-                <div class="composer">
-                    <textarea id="postText" placeholder="Bir şeyler paylaş... Liderlik puanı topla!"></textarea>
-                    <div class="composer-tools">
-                        <div class="tool-icons">
-                            <label for="postImage"><i class="fa-regular fa-image"></i> <span>Görsel Ekle</span></label>
-                            <input type="file" id="postImage" accept="image/*" style="display: none;" onchange="showToast('Görsel eklendi!', 'success')">
-                        </div>
-                        <button class="btn" onclick="createPost()">Gönder</button>
-                    </div>
-                </div>
-                <div id="feedContainer">
-                    <!-- Postlar JS ile gelecek -->
-                </div>
-            </section>
-
-            <!-- ODALAR -->
-            <section id="view-odalar" class="view-section">
-                <div class="header-sticky glass">Sohbet Odaları</div>
-                
-                <div id="roomSelectionArea">
-                    <div class="room-tabs">
-                        <button class="room-tab-btn active" onclick="switchRoomTab('join')">Odaya Katıl</button>
-                        <button class="room-tab-btn" onclick="switchRoomTab('create')">Oda Oluştur</button>
-                    </div>
-                    
-                    <div id="tab-join" class="room-tab-content active">
-                        <div class="room-form-card">
-                            <i class="fa-solid fa-door-open"></i>
-                            <h2 style="margin-bottom: 20px;">Mevcut Odaya Bağlan</h2>
-                            <input type="text" id="joinRoomName" class="input-box" placeholder="Oda Adı">
-                            <input type="password" id="joinRoomPass" class="input-box" placeholder="Oda Şifresi">
-                            <button class="btn" style="width: 100%;" onclick="joinRoom()">Giriş Yap</button>
-                        </div>
-                    </div>
-                    
-                    <div id="tab-create" class="room-tab-content">
-                        <div class="room-form-card">
-                            <i class="fa-solid fa-plus-circle"></i>
-                            <h2 style="margin-bottom: 20px;">Yeni Oda Kur</h2>
-                            <input type="text" id="newRoomName" class="input-box" placeholder="Oda Adı">
-                            <input type="password" id="newRoomPass" class="input-box" placeholder="Oda Şifresi">
-                            <button class="btn" style="width: 100%;" onclick="createRoom()">Oluştur ve Katıl</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ODA İÇİ CHAT -->
-                <div id="roomChatArea">
-                    <div class="chat-header">
-                        <div onclick="exitRoom()" style="cursor:pointer;"><i class="fa-solid fa-chevron-left"></i> Geri</div>
-                        <div><i class="fa-solid fa-hashtag" style="color:var(--text-muted);"></i> <span id="activeRoomTitle">Oda</span></div>
-                        <div class="chat-header-actions" id="roomChatHeaderActions"></div>
-                    </div>
-                    <div class="chat-messages" id="chatContainer"></div>
-                    <div class="chat-input-area">
-                        <label for="chatImage"><i class="fa-solid fa-image" style="font-size: 1.4rem; color: var(--primary); cursor: pointer;"></i></label>
-                        <input type="file" id="chatImage" accept="image/*" style="display: none;" onchange="showToast('Resim hazır', 'success')">
-                        <input type="text" id="chatInputMsg" class="input-box" placeholder="Mesaj gönder..." onkeypress="if(event.key==='Enter') sendRoomMsg()">
-                        <button class="btn" onclick="sendRoomMsg()"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- LİDERLİK TABLOSU -->
-            <section id="view-liderlik" class="view-section">
-                <div class="header-sticky glass">Liderlik Tablosu <i class="fa-solid fa-crown" style="color:var(--gold); font-size: 0.9rem; margin-left:5px;"></i></div>
-                <div class="leaderboard-wrap">
-                    <p style="text-align:center; color:var(--text-muted); margin-bottom:10px;">En çok destek (oy) alan kullanıcılar liderlik koltuğunda!</p>
-                    <div class="podium" id="podiumContainer">
-                        <!-- JS ile dolacak -->
-                    </div>
-                    <div id="leaderboardList" style="margin-top: 2rem;">
-                        <!-- Diğer sıralamalar -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- YÖNETİM (MODERASYON) PANELİ -->
-            <section id="view-yonetim" class="view-section">
-                <div class="header-sticky glass" style="color: var(--danger);">Yönetim Paneli <i class="fa-solid fa-shield-halved" style="font-size: 0.9rem; margin-left:5px;"></i></div>
-                <div class="admin-dashboard">
-                    <div class="stat-cards">
-                        <div class="stat-card">
-                            <i class="fa-solid fa-flag"></i>
-                            <div class="stat-info">
-                                <h3 id="reportCount">0</h3>
-                                <p>Açık Şikayet</p>
-                            </div>
-                        </div>
-                    </div>
-                    <h2 style="margin-bottom:15px; font-size: 1.2rem;">Kullanıcı Bildirimleri</h2>
-                    <div class="report-list" id="adminReportList">
-                        <!-- Şikayetler JS ile dolacak -->
-                    </div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- MOBİL ALT MENÜ -->
-    <nav class="mobile-bottom-nav">
-        <a class="mobile-nav-item active" onclick="switchView('kesfet')"><i class="fa-solid fa-compass"></i></a>
-        <a class="mobile-nav-item" onclick="switchView('odalar')"><i class="fa-solid fa-comments"></i></a>
-        <a class="mobile-nav-item" onclick="switchView('liderlik')"><i class="fa-solid fa-trophy"></i></a>
-        <a class="mobile-nav-item" id="mobileNavAdmin" style="display:none; color:var(--danger);" onclick="switchView('yonetim')"><i class="fa-solid fa-shield-halved"></i></a>
-    </nav>
-
-    <!-- ACTION SHEET (IOS TARZI MENÜ - Raporlama için) -->
-    <div id="actionSheetOverlay" onclick="closeActionSheet(event)">
-        <div id="actionSheet" onclick="event.stopPropagation()">
-            <div class="action-title" id="actionSheetTitle">Seçenekler</div>
-            <div id="actionSheetButtons"></div>
-            <button class="action-btn cancel" onclick="closeActionSheet(true)">İptal</button>
-        </div>
-    </div>
-
-    <script>
-        /* ==========================================
-           VERİ YAPILARI VE STATE YÖNETİMİ
-           ========================================== */
-        let currentUser = null;
-        let activeRoom = null;
-        let selectedPostId = null;
-
-        // Sahte Veritabanı
-        let users = {
-            "admin": { role: "admin", votes: 999 },
-            "user1": { role: "user", votes: 45 },
-            "user2": { role: "user", votes: 120 }
-        };
-        
-        let posts = [
-            { id: 1, author: "user2", text: "Aura projesi harika ilerliyor!", votes: 15, time: "2 saat önce" },
-            { id: 2, author: "admin", text: "Sistem güncellemeleri tamamlandı. Yeni liderlik tablosu aktif.", votes: 85, time: "5 saat önce" }
-        ];
-
-        let reports = []; // { id, postId, author, reason }
-
-        /* ==========================================
-           YARDIMCI FONKSİYONLAR
-           ========================================== */
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = type === 'success' ? `<i class="fa-solid fa-check-circle"></i> ${msg}` : `<i class="fa-solid fa-triangle-exclamation"></i> ${msg}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s ease forwards';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        /* ==========================================
-           KİMLİK DOĞRULAMA (AUTH)
-           ========================================== */
-        let isLoginMode = true;
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('authBtn').innerText = isLoginMode ? "Giriş Yap" : "Kayıt Ol";
-            document.getElementById('authSwitchText').innerHTML = isLoginMode ? "Hesabın yok mu? <span>Kayıt Ol</span>" : "Zaten hesabın var mı? <span>Giriş Yap</span>";
-        }
-
-        function handleAuth() {
-            const username = document.getElementById('authUsername').value.trim();
-            if(!username) return showToast('Kullanıcı adı gerekli', 'error');
-
-            if(!users[username]) {
-                if(isLoginMode) return showToast('Kullanıcı bulunamadı, kayıt olun', 'error');
-                users[username] = { role: username === 'admin' ? 'admin' : 'user', votes: 0 };
-            }
-
-            currentUser = { username: username, ...users[username] };
-            
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('app').style.display = 'grid'; // Masaüstünde grid başlar
-            
-            // Kullanıcı bilgilerini arayüze bas
-            document.getElementById('sidebarUsername').innerText = username;
-            document.getElementById('sidebarAvatar').innerText = username.charAt(0).toUpperCase();
-            document.getElementById('sidebarRole').innerText = currentUser.role === 'admin' ? 'Yönetici' : 'Kullanıcı';
-
-            // Admin panelini göster (eğer adminse)
-            if(currentUser.role === 'admin') {
-                document.getElementById('navAdmin').style.display = 'flex';
-                document.getElementById('mobileNavAdmin').style.display = 'flex';
-                updateAdminPanel();
-            }
-
-            renderFeed();
-            renderLeaderboard();
-            showToast(`Hoş geldin, ${username}!`, 'success');
-        }
-
-        function logout() {
-            currentUser = null;
-            document.getElementById('authOverlay').style.display = 'flex';
-            document.getElementById('app').style.display = 'none';
-        }
-
-        /* ==========================================
-           SAYFA GEÇİŞLERİ
-           ========================================== */
-        function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            
-            document.querySelectorAll('.nav-link, .mobile-nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            if(viewId === 'liderlik') renderLeaderboard();
-            if(viewId === 'yonetim' && currentUser.role === 'admin') updateAdminPanel();
-        }
-
-        /* ==========================================
-           SOSYAL AKIŞ & PAYLAŞIM
-           ========================================== */
-        function createPost() {
-            const text = document.getElementById('postText').value.trim();
-            if(!text) return showToast('Boş gönderi paylaşılamaz', 'error');
-
-            posts.unshift({
-                id: Date.now(),
-                author: currentUser.username,
-                text: text,
-                votes: 0,
-                time: "Şimdi"
-            });
-            document.getElementById('postText').value = '';
-            renderFeed();
-            showToast('Gönderi paylaşıldı!', 'success');
-        }
-
-        function renderFeed() {
-            const container = document.getElementById('feedContainer');
-            container.innerHTML = '';
-            
-            posts.forEach(post => {
-                const isOp = post.author === currentUser.username;
-                container.innerHTML += `
-                    <div class="post-card" id="post-${post.id}">
-                        <div class="post-header">
-                            <div class="post-user">
-                                <div class="user-avatar-mini">${post.author.charAt(0).toUpperCase()}</div>
-                                <div class="post-user-info">
-                                    <div class="post-user-name">
-                                        ${post.author} 
-                                        ${users[post.author].role === 'admin' ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : ''}
-                                    </div>
-                                    <div class="post-time">${post.time}</div>
-                                </div>
-                            </div>
-                            <div>
-                                <button class="btn-vote" onclick="votePost(${post.id}, '${post.author}')"><i class="fa-solid fa-caret-up"></i> Destekle</button>
-                                <i class="fa-solid fa-ellipsis" style="margin-left:10px; cursor:pointer; color:var(--text-muted);" onclick="openPostOptions(${post.id}, ${isOp})"></i>
-                            </div>
-                        </div>
-                        <div class="post-text">${post.text}</div>
-                        <div class="post-actions">
-                            <div class="action-item"><i class="fa-regular fa-heart"></i> ${post.votes} Destek</div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // LİDERLİK OYLAMA SİSTEMİ
-        function votePost(postId, author) {
-            if(author === currentUser.username) return showToast('Kendi gönderini destekleyemezsin', 'error');
-            
-            const post = posts.find(p => p.id === postId);
-            if(post) {
-                post.votes++;
-                users[author].votes += 5; // Profil liderlik puanı artar
-                renderFeed();
-                showToast('Destek puanı gönderildi!', 'success');
-            }
-        }
-
-        /* ==========================================
-           MODERASYON VE ACTION SHEET
-           ========================================== */
-        function openPostOptions(postId, isOp) {
-            selectedPostId = postId;
-            const btnContainer = document.getElementById('actionSheetButtons');
-            btnContainer.innerHTML = '';
-
-            if(isOp || currentUser.role === 'admin') {
-                btnContainer.innerHTML += `<button class="action-btn danger" onclick="deletePost(${postId})">Gönderiyi Sil</button>`;
-            } else {
-                btnContainer.innerHTML += `<button class="action-btn danger" onclick="reportPost(${postId})">Kuralları İhlal Ediyor (Şikayet Et)</button>`;
-            }
-            
-            document.getElementById('actionSheetOverlay').classList.add('show');
-            setTimeout(() => document.getElementById('actionSheet').classList.add('show'), 10);
-        }
-
-        function closeActionSheet(force = false) {
-            if(!force && event.target.id !== 'actionSheetOverlay') return;
-            document.getElementById('actionSheet').classList.remove('show');
-            setTimeout(() => document.getElementById('actionSheetOverlay').classList.remove('show'), 300);
-        }
-
-        function deletePost(id) {
-            posts = posts.filter(p => p.id !== id);
-            renderFeed();
-            closeActionSheet(true);
-            showToast('Gönderi silindi', 'success');
-        }
-
-        function reportPost(id) {
-            const post = posts.find(p => p.id === id);
-            reports.push({ id: Date.now(), postId: id, author: post.author, reason: "Uygunsuz İçerik", reportedBy: currentUser.username });
-            closeActionSheet(true);
-            showToast('Moderatörlere bildirildi', 'success');
-            if(currentUser.role === 'admin') updateAdminPanel();
-        }
-
-        /* ==========================================
-           YÖNETİM (ADMIN) PANELİ
-           ========================================== */
-        function updateAdminPanel() {
-            document.getElementById('reportCount').innerText = reports.length;
-            const container = document.getElementById('adminReportList');
-            container.innerHTML = '';
-            
-            if(reports.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted);">Aktif şikayet bulunmuyor.</p>';
-                return;
-            }
-
-            reports.forEach(r => {
-                container.innerHTML += `
-                    <div class="report-item">
-                        <div class="report-details">
-                            <span class="report-tag">${r.reason}</span>
-                            <p style="font-size:0.9rem;"><strong>Şikayet Edilen:</strong> ${r.author}</p>
-                            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">Bildiren: ${r.reportedBy}</p>
-                        </div>
-                        <button class="btn btn-danger" onclick="resolveReport(${r.id}, ${r.postId})">İşlem Yap (Sil)</button>
-                    </div>
-                `;
-            });
-        }
-
-        function resolveReport(reportId, postId) {
-            deletePost(postId);
-            reports = reports.filter(r => r.id !== reportId);
-            updateAdminPanel();
-        }
-
-        /* ==========================================
-           LİDERLİK TABLOSU MANTIĞI
-           ========================================== */
-        function renderLeaderboard() {
-            const podium = document.getElementById('podiumContainer');
-            podium.innerHTML = '';
-
-            // Kullanıcıları puana göre sırala
-            const sortedUsers = Object.keys(users)
-                .map(k => ({ name: k, votes: users[k].votes, role: users[k].role }))
-                .sort((a, b) => b.votes - a.votes);
-
-            const top3 = sortedUsers.slice(0, 3);
-            
-            // Podyum sıralaması (İkinci, Birinci, Üçüncü)
-            const displayOrder = [top3[1], top3[0], top3[2]];
-            const rankClasses = ['rank-2', 'rank-1', 'rank-3'];
-            const rankNumbers = [2, 1, 3];
-
-            displayOrder.forEach((u, index) => {
-                if(!u) return;
-                podium.innerHTML += `
-                    <div class="podium-item ${rankClasses[index]}">
-                        <div class="podium-rank">${rankNumbers[index]}</div>
-                        <div class="podium-name">${u.name}</div>
-                        <div class="podium-votes">${u.votes} XP</div>
-                    </div>
-                `;
-            });
-        }
-
-        /* ==========================================
-           ODALAR (ROOMS) MANTIĞI
-           ========================================== */
-        function switchRoomTab(tabId) {
-            document.querySelectorAll('.room-tab-btn').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.room-tab-content').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-        }
-
-        function createRoom() {
-            const name = document.getElementById('newRoomName').value;
-            if(!name) return showToast('Oda adı girin', 'error');
-            openRoom(name);
-        }
-
-        function joinRoom() {
-            const name = document.getElementById('joinRoomName').value;
-            if(!name) return showToast('Oda adı girin', 'error');
-            openRoom(name);
-        }
-
-        function openRoom(name) {
-            activeRoom = name;
-            document.getElementById('roomSelectionArea').style.display = 'none';
-            document.getElementById('roomChatArea').style.display = 'flex';
-            document.getElementById('activeRoomTitle').innerText = name;
-            document.getElementById('chatContainer').innerHTML = ''; // Temizle
-            
-            // Adminse odayı silme butonu ekle
-            if(currentUser.role === 'admin') {
-                document.getElementById('roomChatHeaderActions').innerHTML = `<button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="exitRoom()">Odayı Kapat</button>`;
-            }
-        }
-
-        function exitRoom() {
-            activeRoom = null;
-            document.getElementById('roomChatArea').style.display = 'none';
-            document.getElementById('roomSelectionArea').style.display = 'block';
-        }
-
-        function sendRoomMsg() {
-            const input = document.getElementById('chatInputMsg');
-            const msg = input.value.trim();
-            if(!msg) return;
-
-            const chatContainer = document.getElementById('chatContainer');
-            chatContainer.innerHTML += `
-                <div class="chat-msg me">
-                    <div class="msg-info">Ben</div>
-                    <div class="msg-bubble">${msg}</div>
-                </div>
-            `;
-            input.value = '';
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-    </script>
+const firebaseConfig={apiKey:"AIzaSyD0ztDpxB6vsSHLw2CW7xLZh9qQWDAPqY",authDomain:"aura-ultra-x.firebaseapp.com",projectId:"aura-ultra-x",storageBucket:"aura-ultra-x.firebasestorage.app",messagingSenderId:"931526439447",appId:"1:931526439447:web:06aa1a89e0ad98407f6252"};
+const app=initializeApp(firebaseConfig); const auth=getAuth(app); const db=getDatabase(app); const storage=getStorage(app);
+let currentUser=null,isLoginMode=true,currentRoom=null,roomUnsub=null,feedUnsub=null,leaderUnsub=null,reportsUnsub=null;
+const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function showModal(title,body,actions=''){ $('modalRoot').innerHTML=`<div class="modal" id="activeModal"><div class="modal-card"><h2>${title}</h2>${body}<div class="modal-actions">${actions}</div></div></div>`; }
+function closeModal(){ $('modalRoot').innerHTML=''; }
+function setPage(page){ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); const el=$(page+'Page'); if(el)el.classList.add('active'); document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page)); $('pageTitle').textContent={discover:'Keşfet',rooms:'Odalar',leadership:'Liderlik',admin:'Kontrol Paneli'}[page]||'Aura'; if(page==='rooms')loadRooms(); if(page==='leadership')loadLeadership(); if(page==='admin'&&currentUser?.isAdmin)loadReports(); }
+document.querySelectorAll('[data-page]').forEach(x=>x.addEventListener('click',()=>setPage(x.dataset.page)));
+$('authToggleText').onclick=()=>{isLoginMode=!isLoginMode; $('usernameGroup').style.display=isLoginMode?'none':'block'; $('authSubtitle').textContent=isLoginMode?'Sınırları aş, kendi aurani yarat.':'Hemen yeni bir hesap oluştur.'; $('authBtn').textContent=isLoginMode?'Giriş Yap':'Kayıt Ol'; $('authToggleText').innerHTML=isLoginMode?'Hesabın yok mu? <span>Kayıt Ol</span>':'Zaten hesabın var mı? <span>Giriş Yap</span>';};
+$('authBtn').onclick=async()=>{const email=$('emailInput').value.trim(),password=$('passwordInput').value,username=$('usernameInput').value.trim();if(!email||!password)return alert('E-posta ve şifre gerekli.');try{if(isLoginMode){await signInWithEmailAndPassword(auth,email,password)}else{if(!username)return alert('Kullanıcı adı gerekli.');const c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:username});await set(ref(db,'users/'+c.user.uid),{uid:c.user.uid,displayName:username,email,createdAt:serverTimestamp(),isAdmin:false,blocked:false})}}catch(e){alert(e.message)}};
+$('logoutBtn').onclick=()=>signOut(auth);$('mobileLogout').onclick=()=>signOut(auth);$('focusPostBtn').onclick=()=>{$('postInput').focus();setPage('discover')};
+onAuthStateChanged(auth,async user=>{if(!user){currentUser=null;$('authOverlay').style.display='flex';$('app').style.display='none';return}const snap=await get(ref(db,'users/'+user.uid));const data=snap.exists()?snap.val():{};currentUser={...user,...data};$('authOverlay').style.display='none';$('app').style.display='grid';const name=user.displayName||data.displayName||user.email.split('@')[0];const initial=name.charAt(0).toUpperCase();$('desktopAvatar').textContent=initial;$('composerAvatar').textContent=initial;$('desktopUserName').textContent=name;$('desktopUserHandle').textContent='@'+(user.email?.split('@')[0]||'kullanici');if(data.isAdmin||user.email==='admin@auraultrax.com')$('adminNav').classList.remove('hidden');loadFeed();});
+function loadFeed(){if(feedUnsub)feedUnsub();feedUnsub=onValue(ref(db,'posts'),snap=>{const arr=[];snap.forEach(x=>arr.push({id:x.key,...x.val()}));arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));renderFeed(arr)})}
+function renderFeed(posts){$('feedContainer').innerHTML=posts.length?posts.map(p=>{const name=esc(p.authorName||'Kullanıcı'),leader=p.leaderRank?`<span class="leader-badge">Lider ${p.leaderRank}</span>`:'';return `<article class="post-card"><div class="user-avatar">${esc(name[0]||'A')}</div><div class="post-main-content"><div class="post-user-info"><h4>${name}</h4>${leader}<span>@${esc(p.authorHandle||'kullanici')}</span></div><div class="post-body-text">${esc(p.text)}</div>${p.imageUrl?`<img class="post-image" src="${esc(p.imageUrl)}">`:''}<div class="post-actions-row"><div class="post-action-btn" onclick="toggleLike('${p.id}')"><i class="fa-solid fa-heart"></i> ${p.likes||0}</div><div class="post-action-btn" onclick="toggleComments('${p.id}')"><i class="fa-regular fa-comment"></i> Yorum</div><div class="post-action-btn" onclick="voteUser('${p.authorUid}')"><i class="fa-solid fa-star"></i> Oy Ver</div></div><div id="comments-${p.id}" class="comment-box hidden"></div></div></article>`}).join(''):'<div style="padding:2rem;text-align:center;color:var(--text-muted)">Henüz gönderi yok.</div>'}
+window.toggleLike=async id=>{const s=await get(ref(db,'posts/'+id));if(!s.exists())return;const p=s.val(),uid=currentUser.uid,likes=p.likedBy||{};if(likes[uid]){delete likes[uid];p.likes=Math.max(0,(p.likes||0)-1)}else{likes[uid]=true;p.likes=(p.likes||0)+1}await update(ref(db,'posts/'+id),{likes,likedBy:likes})};
+window.voteUser=async uid=>{if(uid===currentUser.uid)return alert('Kendine oy veremezsin.');const month=new Date().toISOString().slice(0,7),voteRef=ref(db,`votes/${month}/${currentUser.uid}`),s=await get(voteRef);if(s.exists())return alert('Bu ay zaten oy kullandın.');await set(voteRef,{votedFor:uid,createdAt:serverTimestamp()});const c=ref(db,`monthlyVotes/${month}/${uid}`),v=await get(c);await set(c,(v.val()||0)+1);alert('Oy verildi.')};
+window.toggleComments=async id=>{const box=$('comments-'+id);box.classList.toggle('hidden');if(box.dataset.loaded)return;box.dataset.loaded='1';onValue(ref(db,'comments/'+id),snap=>{let html='';snap.forEach(x=>{const c=x.val();html+=`<div class="comment"><b>${esc(c.authorName)}</b> <small>${esc(c.text)}</small><div class="comment-actions"><span onclick="replyComment('${id}','${x.key}')">Yanıtla</span><span onclick="reportComment('${id}','${x.key}')">Şikayet Et</span></div></div>`});box.innerHTML=html+`<div class="comment-input-row"><input class="comment-input" id="commentInput-${id}" placeholder="Yorum yaz..."><button class="small-btn" onclick="addComment('${id}')">Gönder</button></div>`})};
+window.addComment=async id=>{const input=$('commentInput-'+id),text=input.value.trim();if(!text)return;await push(ref(db,'comments/'+id),{authorUid:currentUser.uid,authorName:currentUser.displayName||currentUser.email.split('@')[0],text,createdAt:serverTimestamp()});input.value=''};window.replyComment=(postId,commentId)=>{const input=$('commentInput-'+postId);input.value='@yanıt ';input.focus()};window.reportComment=(postId,commentId)=>reportContent({type:'comment',postId,commentId});
+$('postSubmit').onclick=async()=>{const text=$('postInput').value.trim(),file=$('postImageInput').files[0];if(!text&&!file)return;let imageUrl='';try{if(file){const r=storageRef(storage,`postImages/${currentUser.uid}/${Date.now()}_${file.name}`);await uploadBytes(r,file);imageUrl=await getDownloadURL(r)}await push(ref(db,'posts'),{authorUid:currentUser.uid,authorName:currentUser.displayName||currentUser.email.split('@')[0],authorHandle:currentUser.email.split('@')[0],text,imageUrl,likes:0,createdAt:serverTimestamp()});$('postInput').value='';$('postImageInput').value=''}catch(e){alert(e.message)}};
+function loadRooms(){onValue(ref(db,'rooms'),snap=>{let html='';snap.forEach(x=>{const r=x.val();html+=`<div class="room-card" onclick="openRoom('${x.key}')"><h3>${esc(r.name)}</h3><small>${r.memberCount||0} kişi</small></div>`});$('roomList').innerHTML=html||'<p style="color:var(--text-muted)">Henüz oda yok.</p>'})}
+$('createRoomBtn').onclick=()=>showModal('Oda Ekle',`<input id="roomName" placeholder="Oda Adı"><input id="roomPass" type="password" placeholder="Oda Şifresi">`,`<button class="muted-btn" onclick="closeModal()">İptal</button><button class="primary-btn" onclick="createRoom()">Oluştur</button>`);window.createRoom=async()=>{const name=$('roomName').value.trim(),password=$('roomPass').value;if(!name||!password)return alert('Alanları doldur.');const r=push(ref(db,'rooms'));await set(r,{name,passwordHash:password,ownerUid:currentUser.uid,adminUid:currentUser.uid,memberCount:0,createdAt:serverTimestamp()});closeModal();openRoom(r.key)};
+$('joinRoomBtn').onclick=()=>showModal('Odaya Gir',`<input id="joinName" placeholder="Oda Adı"><input id="joinPass" type="password" placeholder="Şifre">`,`<button class="muted-btn" onclick="closeModal()">İptal</button><button class="primary-btn" onclick="joinRoomByName()">Gir</button>`);window.joinRoomByName=async()=>{const name=$('joinName').value.trim(),pass=$('joinPass').value;snap=await get(ref(db,'rooms'));let found=null;snap.forEach(x=>{if(x.val().name===name)found={id:x.key,...x.val()}});if(!found||found.passwordHash!==pass)return alert('Oda adı veya şifre hatalı.');closeModal();openRoom(found.id)};
+window.openRoom=async id=>{const s=await get(ref(db,'rooms/'+id));if(!s.exists())return;const room={id,...s.val()};currentRoom=room;await set(ref(db,`roomMembers/${id}/${currentUser.uid}`),{uid:currentUser.uid,name:currentUser.displayName||currentUser.email.split('@')[0],joinedAt:serverTimestamp()});$('roomList').classList.add('hidden');$('roomsPage').querySelector('.rooms-toolbar').classList.add('hidden');$('roomView').classList.remove('hidden');$('roomView').innerHTML=`<div class="room-header"><div><h2>${esc(room.name)}</h2><small id="memberCountText"></small></div><button class="danger-btn" onclick="leaveRoom()">Odadan Çık</button></div><div id="roomMessages" class="room-messages"></div><div class="room-compose"><input id="roomMessage" class="room-input" placeholder="Mesaj Yaz"><label class="small-btn" title="Fotoğraf Yükle">+<input id="roomImage" type="file" accept="image/*" hidden></label><button class="small-btn" onclick="sendRoomMessage()">Gönder</button></div><div class="room-members" id="roomMembers"></div>`;if(roomUnsub)roomUnsub();roomUnsub=onValue(ref(db,'roomMessages/'+id),snap=>{let html='';snap.forEach(x=>{const m=x.val();html+=`<div class="message" oncontextmenu="messageMenu(event,'${id}','${x.key}','${m.uid}','${esc(m.name)}');return false"><small>${esc(m.name)}</small>${esc(m.text)}${m.imageUrl?`<br><img src="${esc(m.imageUrl)}">`:''}</div>`});$('roomMessages').innerHTML=html||'<p style="color:var(--text-muted)">Henüz mesaj yok.</p>';$('roomMessages').scrollTop=$('roomMessages').scrollHeight});onValue(ref(db,'roomMembers/'+id),snap=>{let html='<b>Odadaki Kullanıcılar:</b> ';let n=0;snap.forEach(x=>{html+=esc(x.val().name)+' · ';n++});$('roomMembers').innerHTML=html;$('memberCountText').textContent=n+' kişi'});};
+window.leaveRoom=async()=>{if(!currentRoom)return;await remove(ref(db,`roomMembers/${currentRoom.id}/${currentUser.uid}`));currentRoom=null;if(roomUnsub)roomUnsub();$('roomView').classList.add('hidden');$('roomList').classList.remove('hidden');$('roomsPage').querySelector('.rooms-toolbar').classList.remove('hidden')};
+window.sendRoomMessage=async()=>{if(!currentRoom)return;const text=$('roomMessage').value.trim(),file=$('roomImage').files[0];if(!text&&!file)return;let imageUrl='';if(file){const r=storageRef(storage,`roomImages/${currentRoom.id}/${Date.now()}_${file.name}`);await uploadBytes(r,file);imageUrl=await getDownloadURL(r)}await push(ref(db,'roomMessages/'+currentRoom.id),{uid:currentUser.uid,name:currentUser.displayName||currentUser.email.split('@')[0],text,imageUrl,createdAt:serverTimestamp()});$('roomMessage').value='';$('roomImage').value=''};
+window.messageMenu=(e,roomId,messageId,uid,name)=>{if(uid===currentUser.uid)return;const isAdmin=currentUser.isAdmin||currentUser.uid===currentRoom.adminUid;const actions=isAdmin?`<button class="muted-btn" onclick="toggleBlock('${roomId}','${uid}')">Engelle / Engel Kaldır</button><button class="danger-btn" onclick="deleteMessage('${roomId}','${messageId}')">Sil</button><button class="danger-btn" onclick="removeMember('${roomId}','${uid}')">Gruptan Çıkar</button><button class="muted-btn" onclick="reportMessage('${roomId}','${messageId}','${uid}','${name}')">Şikayet Et</button>`:`<button class="muted-btn" onclick="reportMessage('${roomId}','${messageId}','${uid}','${name}')">Şikayet Et</button>`;showModal(name,'<p>Mesaj işlemleri</p>',actions+'<button class="muted-btn" onclick="closeModal()">Kapat</button>')};
+window.deleteMessage=async(roomId,messageId)=>{await remove(ref(db,`roomMessages/${roomId}/${messageId}`));closeModal()};window.removeMember=async(roomId,uid)=>{await remove(ref(db,`roomMembers/${roomId}/${uid}`));await set(ref(db,`roomBans/${roomId}/${uid}`),{removed:true,at:serverTimestamp()});closeModal()};window.toggleBlock=async(roomId,uid)=>{const r=ref(db,`roomBlocks/${roomId}/${uid}`),s=await get(r);if(s.exists())await remove(r);else await set(r,{blocked:true,at:serverTimestamp()});closeModal()};
+async function reportContent(data){await push(ref(db,'reports'),{...data,reporterUid:currentUser.uid,reporterName:currentUser.displayName||currentUser.email,createdAt:serverTimestamp(),status:'open'});alert('Şikayet gönderildi.')};window.reportMessage=(roomId,messageId,uid,name)=>{reportContent({type:'message',roomId,messageId,reportedUid:uid,reportedName:name});closeModal()};
+function loadReports(){if(reportsUnsub)reportsUnsub();reportsUnsub=onValue(ref(db,'reports'),snap=>{let html='';snap.forEach(x=>{const r=x.val();if(r.status==='resolved')return;html+=`<div class="report-card"><b>${esc(r.reportedName||'Kullanıcı')}</b><p>Tür: ${esc(r.type)}<br>Şikayet eden: ${esc(r.reporterName||'')}</p><div class="admin-actions"><button class="danger-btn" onclick="banUser('${x.key}','${r.reportedUid||''}')">Kullanıcıyı Sil / Banla</button><button class="muted-btn" onclick="resolveReport('${x.key}')">Şikayeti Kapat</button></div></div>`});$('reportsContainer').innerHTML=html||'<p style="color:var(--text-muted)">Açık şikayet yok.</p>'})};window.resolveReport=async id=>update(ref(db,'reports/'+id),{status:'resolved'});window.banUser=async(reportId,uid)=>{if(!uid)return;await set(ref(db,'bannedUsers/'+uid),{banned:true,at:serverTimestamp()});await update(ref(db,'reports/'+reportId),{status:'resolved',action:'banned'});alert('Kullanıcı ban listesine alındı.')};
+function loadLeadership(){const month=new Date().toISOString().slice(0,7);if(leaderUnsub)leaderUnsub();leaderUnsub=onValue(ref(db,'monthlyVotes/'+month),async snap=>{const arr=[];snap.forEach(x=>arr.push({uid:x.key,votes:x.val()}));arr.sort((a,b)=>b.votes-a.votes);let html='';for(let i=0;i<Math.min(10,arr.length);i++){const u=await get(ref(db,'users/'+arr[i].uid));const name=u.exists()?u.val().displayName:'Kullanıcı';html+=`<div class="leader-row"><div class="leader-rank">${i+1}</div><div class="user-avatar">${esc(name[0]||'K')}</div><b>${esc(name)}</b><span style="color:var(--text-muted)">${arr[i].votes} oy</span></div>`}$('leaderboardList').innerHTML=html||'<p style="color:var(--text-muted);padding:1rem 0">Henüz oy yok.</p>'})}
+</script>
 </body>
 </html>
