@@ -337,7 +337,12 @@
             .podium { gap: 6px; }
             .podium-name { font-size: 0.85rem; }
         }
-    </style>
+    
+        .google-btn { width:100%; background:#fff; color:#222; border:1px solid #ddd; margin-bottom:10px; }
+        .google-btn:hover { background:#f4f4f4; }
+        #regionField { display:none; }
+        #googleStatus { display:none; font-size:.85rem; color:var(--text-muted); margin-bottom:10px; text-align:center; }
+</style>
 </head>
 <body>
 
@@ -350,6 +355,13 @@
             <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra</div>
             <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı Adı" autocomplete="off">
             <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
+            <select id="regionField" class="input-box">
+                <option value="">Bulunduğunuz Bölgeyi Seçin</option>
+                <option>Türkiye</option><option>Avrupa</option><option>Asya</option><option>Kuzey Amerika</option>
+                <option>Güney Amerika</option><option>Afrika</option><option>Okyanusya</option><option>Orta Doğu</option>
+            </select>
+            <div id="googleStatus"></div>
+            <button class="btn google-btn" id="googleBtn" onclick="googleRegister()" style="display:none;"><i class="fa-brands fa-google"></i> Google ile Kayıt Ol</button>
             <button class="btn" style="width: 100%; font-size: 1.05rem; padding: 14px;" id="authBtn" onclick="handleAuth()">Giriş Yap</button>
             <p class="auth-switch" onclick="toggleAuthMode()" id="authSwitchText">Hesabın yok mu? <span>Kayıt Ol</span></p>
         </div>
@@ -522,6 +534,37 @@
         const firestore = firebase.firestore();
         // Firebase oturumu: Firestore kuralları request.auth gerektiriyorsa erişim sağlar.
         let firebaseReady = firebase.auth().currentUser ? Promise.resolve(firebase.auth().currentUser) : firebase.auth().signInAnonymously().then(result => result.user).catch(err => { console.error('Firebase Auth:', err); throw err; });
+
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        let pendingGoogleUser = null;
+        let currentNetwork = { ip: null, ipHash: null, deviceHash: null };
+        async function sha256(value) { const data = new TextEncoder().encode(value || ''); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+        async function getNetworkIdentity() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+                const data = await response.json(); const ip = data.ip || '';
+                const device = [navigator.userAgent, navigator.platform, navigator.language, screen.width, screen.height].join('|');
+                return { ip, ipHash: await sha256(ip), deviceHash: await sha256(device) };
+            } catch (e) { return { ip: null, ipHash: null, deviceHash: await sha256([navigator.userAgent, navigator.platform].join('|')) }; }
+        }
+        async function isBannedNetwork(identity) {
+            if (!identity) return false;
+            if (identity.ipHash && (await firestore.collection('bannedIPs').doc(identity.ipHash).get()).exists) return true;
+            if (identity.deviceHash && (await firestore.collection('bannedDevices').doc(identity.deviceHash).get()).exists) return true;
+            return false;
+        }
+        function updateAuthForm() {
+            const register = !isLoginMode;
+            document.getElementById('googleBtn').style.display = register && !pendingGoogleUser ? 'block' : 'none';
+            document.getElementById('regionField').style.display = register ? 'block' : 'none';
+            document.getElementById('authBtn').innerText = register ? 'Kayıt Ol' : 'Giriş Yap';
+            document.getElementById('googleStatus').style.display = pendingGoogleUser ? 'block' : 'none';
+            if (pendingGoogleUser) document.getElementById('googleStatus').innerText = `Google hesabı seçildi: ${pendingGoogleUser.email || 'hesap'}`;
+        }
+        async function googleRegister() {
+            try { const result = await firebase.auth().signInWithPopup(googleProvider); pendingGoogleUser = result.user; updateAuthForm(); showToast('Google hesabı seçildi. Kullanıcı adı, şifre ve bölgeni doldur.', 'success'); }
+            catch (e) { console.error(e); showToast('Google ile kayıt başarısız: ' + (e.code || e.message), 'error'); }
+        }
     </script>
     <script>
         /* ==========================================================================
@@ -623,43 +666,42 @@
            4. BAŞLATMA VE YETKİLENDİRME
            ========================================================================== */
         window.onload = async () => {
-            await firebaseReady;
+            await firebaseReady; updateAuthForm();
             if (currentUser && !db.banned.includes(currentUser)) {
+                currentNetwork = await getNetworkIdentity();
+                if (await isBannedNetwork(currentNetwork)) { alert('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); return; }
                 setupAppUI();
-            } else if (db.banned.includes(currentUser)) {
-                alert("Bu cihaz/hesap kalıcı olarak engellenmiştir.");
-                localStorage.removeItem('aurax_active_user');
-            }
+            } else if (db.banned.includes(currentUser)) { alert('Bu hesap kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); }
         };
 
         function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('authBtn').innerText = isLoginMode ? 'Giriş Yap' : 'Kayıt Ol';
+            isLoginMode = !isLoginMode; pendingGoogleUser = null;
             document.getElementById('authSwitchText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
+            updateAuthForm();
         }
 
         async function handleAuth() {
             await firebaseReady;
             const u = document.getElementById('authUsername').value.trim();
             const p = document.getElementById('authPassword').value.trim();
-            if (!u || !p) return showToast("Kullanıcı adı ve şifre gereklidir.", "error");
-            if (db.banned.includes(u)) return showToast("Bu kullanıcı adı yasaklanmıştır.", "error");
-
+            const region = document.getElementById('regionField').value;
+            if (!u || !p) return showToast('Kullanıcı adı ve şifre gereklidir.', 'error');
+            if (!isLoginMode && !region) return showToast('Kayıt olmak için bölgenizi seçin.', 'error');
+            if (db.banned.includes(u)) return showToast('Bu kullanıcı adı yasaklanmıştır.', 'error');
             try {
-                const ref = firestore.collection('users').doc(u);
-                const snap = await ref.get();
+                currentNetwork = await getNetworkIdentity();
+                if (await isBannedNetwork(currentNetwork)) return showToast('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.', 'error');
+                const ref = firestore.collection('users').doc(u); const snap = await ref.get();
                 if (isLoginMode) {
-                    if (snap.exists && snap.data().password === p) loginSuccess(u);
-                    else showToast("Hatalı kullanıcı adı veya şifre.", "error");
+                    if (snap.exists && snap.data().password === p) { await ref.update({ lastIpHash: currentNetwork.ipHash || null, lastDeviceHash: currentNetwork.deviceHash || null, lastSeenAt: Date.now() }); loginSuccess(u); }
+                    else showToast('Hatalı kullanıcı adı veya şifre.', 'error');
                 } else {
-                    if (snap.exists) return showToast("Bu kullanıcı adı önceden alınmış.", "error");
-                    await ref.set({ password: p, votes: 0, isLider: false, createdAt: Date.now() });
+                    if (!pendingGoogleUser) return showToast('Önce Google ile Kayıt Ol butonuna basıp hesabını seç.', 'error');
+                    if (snap.exists) return showToast('Bu kullanıcı adı önceden alınmış.', 'error');
+                    await ref.set({ password: p, votes: 0, isLider: false, region, googleUid: pendingGoogleUser.uid, googleEmail: pendingGoogleUser.email || null, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
                     loginSuccess(u);
                 }
-            } catch (e) {
-                console.error(e);
-                showToast("Firebase bağlantı hatası. Firestore'u etkinleştir.", "error");
-            }
+            } catch (e) { console.error(e); showToast('Kayıt/giriş hatası: ' + (e.code || e.message), 'error'); }
         }
 
         function loginSuccess(u) {
@@ -691,7 +733,7 @@
                 // LİDERLİĞİ BİTİR BUTONU SADECE ADMIN EKRANINDA RENDER EDİLİR
                 document.getElementById('adminLeaderboardControls').innerHTML = `<button class="btn btn-danger" onclick="simulateMonthEnd()"><i class="fa-solid fa-power-off"></i> Liderliği Sıfırla / Ayı Bitir</button>`;
             } else {
-                document.getElementById('sidebarRole').innerText = 'Üye';
+                document.getElementById('sidebarRole').innerText = db.users[currentUser]?.region ? `Üye · ${db.users[currentUser].region}` : 'Üye';
                 document.getElementById('adminLeaderboardControls').innerHTML = ''; // Normal kullanıcı göremez
             }
 
@@ -1151,13 +1193,18 @@
             });
         }
 
-        function banUserFromSystem(username, reportIndex) {
-            if (!db.banned.includes(username)) {
-                db.banned.push(username);
-            }
-            db.reports.splice(reportIndex, 1);
-            saveDB(); renderAdminPanel();
-            showToast(`${username} kalıcı olarak engellendi!`, "success");
+        async function banUserFromSystem(username, reportIndex) {
+            if (currentUser !== ADMIN_USER) return;
+            try {
+                const userSnap = await firestore.collection('users').doc(username).get();
+                const user = userSnap.exists ? userSnap.data() : {};
+                if (!db.banned.includes(username)) db.banned.push(username);
+                await firestore.collection('bannedUsers').doc(username).set({ bannedAt: Date.now(), bannedBy: ADMIN_USER });
+                if (user.ipHash) await firestore.collection('bannedIPs').doc(user.ipHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
+                if (user.deviceHash) await firestore.collection('bannedDevices').doc(user.deviceHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
+                db.reports.splice(reportIndex, 1); saveDB(); renderAdminPanel();
+                showToast(`${username} hesabı, kayıtlı ağ/cihaz kimliğiyle birlikte kalıcı olarak engellendi!`, 'success');
+            } catch (e) { console.error(e); showToast('Ban işlemi başarısız: ' + (e.code || e.message), 'error'); }
         }
 
         function ignoreReport(index) {
