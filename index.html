@@ -552,23 +552,38 @@
         const ADMIN_PASS = "Muhammed.2009";
 
         let db = {
-            users: JSON.parse(localStorage.getItem('aurax_users')) || {},
+            users: {},
             banned: JSON.parse(localStorage.getItem('aurax_banned')) || [],
-            posts: JSON.parse(localStorage.getItem('aurax_posts')) || [],
+            posts: [],
             rooms: {},
             reports: JSON.parse(localStorage.getItem('aurax_reports')) || []
         };
 
-        // Firebase kullanıcı senkronizasyonu
+        // ORTAK VERİ: Kullanıcılar, gönderiler ve odalar Firebase'den gelir.
+        // localStorage yalnızca bu cihazdaki aktif kullanıcıyı hatırlamak için kullanılır.
+        let postsUnsubscribe = null;
+        let roomsUnsubscribe = null;
+
         firestore.collection('users').onSnapshot(snapshot => {
             db.users = {};
-            snapshot.forEach(doc => db.users[doc.id] = doc.data());
-            localStorage.setItem('aurax_users', JSON.stringify(db.users));
+            snapshot.forEach(doc => db.users[doc.id] = { id: doc.id, ...doc.data() });
             if (currentUser) {
                 renderLeaderboard();
                 loadFeed();
             }
-        });
+        }, err => console.error('Users snapshot:', err));
+
+        firestore.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+            db.posts = [];
+            snapshot.forEach(doc => db.posts.push({ id: doc.id, ...doc.data() }));
+            if (currentUser) loadFeed();
+        }, err => console.error('Posts snapshot:', err));
+
+        firestore.collection('rooms').onSnapshot(snapshot => {
+            db.rooms = {};
+            snapshot.forEach(doc => db.rooms[doc.id] = { id: doc.id, ...doc.data() });
+            if (currentUser && typeof renderRoomList === 'function') renderRoomList();
+        }, err => console.error('Rooms snapshot:', err));
 
         // Admin hesabını Firebase'e bir kez yaz
         firestore.collection('users').doc(ADMIN_USER).get().then(doc => {
@@ -578,9 +593,8 @@
         }).catch(console.error);
 
         function saveDB() {
-            localStorage.setItem('aurax_users', JSON.stringify(db.users));
+            // Ortak veriler Firebase'de tutulur.
             localStorage.setItem('aurax_banned', JSON.stringify(db.banned));
-            localStorage.setItem('aurax_posts', JSON.stringify(db.posts));
             localStorage.setItem('aurax_reports', JSON.stringify(db.reports));
         }
 
@@ -608,7 +622,8 @@
         /* ==========================================================================
            4. BAŞLATMA VE YETKİLENDİRME
            ========================================================================== */
-        window.onload = () => {
+        window.onload = async () => {
+            await firebaseReady;
             if (currentUser && !db.banned.includes(currentUser)) {
                 setupAppUI();
             } else if (db.banned.includes(currentUser)) {
@@ -714,43 +729,39 @@
         /* ==========================================================================
            5. KEŞFET & BEĞENİ DÜZELTMESİ (1 KULLANICI = MAX 1 BEĞENİ)
            ========================================================================== */
-        function createPost() {
+        async function createPost() {
+            await firebaseReady;
             const text = document.getElementById('postText').value.trim();
             const fileInput = document.getElementById('postImage');
-            
             if (!text && !fileInput.files[0]) return showToast("Lütfen bir metin yazın veya görsel ekleyin.", "error");
 
-            const newPost = { id: Date.now(), author: currentUser, text: text, image: null, likedBy: [], comments: [], timestamp: Date.now() };
-            
-            if (fileInput.files[0]) {
-                getBase64(fileInput.files[0], (base64) => {
-                    newPost.image = base64;
-                    db.posts.unshift(newPost); saveDB(); loadFeed();
-                });
-            } else {
-                db.posts.unshift(newPost); saveDB(); loadFeed();
-            }
-            document.getElementById('postText').value = '';
-            fileInput.value = '';
-            showToast("Gönderiniz başarıyla yayınlandı!");
+            const publish = async (image) => {
+                const newPost = {
+                    author: currentUser,
+                    text,
+                    image: image || null,
+                    likedBy: [],
+                    comments: [],
+                    timestamp: Date.now()
+                };
+                await firestore.collection('posts').add(newPost);
+                document.getElementById('postText').value = '';
+                fileInput.value = '';
+                showToast("Gönderiniz başarıyla yayınlandı!");
+            };
+
+            if (fileInput.files[0]) getBase64(fileInput.files[0], image => publish(image).catch(e => { console.error(e); showToast('Gönderi yayınlanamadı.', 'error'); }));
+            else publish(null).catch(e => { console.error(e); showToast('Gönderi yayınlanamadı.', 'error'); });
         }
 
-        function toggleLike(index) {
-            let post = db.posts[index];
-            if (!post.likedBy || !Array.isArray(post.likedBy)) {
-                post.likedBy = [];
-            }
-            
-            const userIndex = post.likedBy.indexOf(currentUser);
-            if (userIndex > -1) {
-                // Beğeni zaten var -> Kaldır
-                post.likedBy.splice(userIndex, 1);
-            } else {
-                // Beğeni yok -> Ekle
-                post.likedBy.push(currentUser);
-            }
-            saveDB();
-            loadFeed();
+        async function toggleLike(index) {
+            await firebaseReady;
+            const post = db.posts[index];
+            if (!post) return;
+            const likedBy = Array.isArray(post.likedBy) ? [...post.likedBy] : [];
+            const i = likedBy.indexOf(currentUser);
+            if (i >= 0) likedBy.splice(i, 1); else likedBy.push(currentUser);
+            await firestore.collection('posts').doc(post.id).update({ likedBy });
         }
 
         function voteUser(username) {
@@ -842,22 +853,26 @@
             el.style.display = el.style.display === 'block' ? 'none' : 'block';
         }
 
-        function addComment(index) {
+        async function addComment(index) {
             const val = document.getElementById(`commInp_${index}`).value.trim();
-            if (!val) return;
-            if (!db.posts[index].comments) db.posts[index].comments = [];
-            db.posts[index].comments.push({ author: currentUser, text: val, replies: [] });
-            saveDB(); loadFeed();
-            setTimeout(() => document.getElementById(`comments_${index}`).style.display = 'block', 50);
+            const post = db.posts[index];
+            if (!val || !post) return;
+            const comments = Array.isArray(post.comments) ? [...post.comments] : [];
+            comments.push({ author: currentUser, text: val, replies: [] });
+            await firestore.collection('posts').doc(post.id).update({ comments });
+            setTimeout(() => { const el = document.getElementById(`comments_${index}`); if (el) el.style.display = 'block'; }, 50);
         }
 
-        function addReply(pIndex, cIndex) {
+        async function addReply(pIndex, cIndex) {
             const val = document.getElementById(`replyInp_${pIndex}_${cIndex}`).value.trim();
-            if (!val) return;
-            if (!db.posts[pIndex].comments[cIndex].replies) db.posts[pIndex].comments[cIndex].replies = [];
-            db.posts[pIndex].comments[cIndex].replies.push({ author: currentUser, text: val });
-            saveDB(); loadFeed();
-            setTimeout(() => document.getElementById(`comments_${pIndex}`).style.display = 'block', 50);
+            const post = db.posts[pIndex];
+            if (!val || !post) return;
+            const comments = Array.isArray(post.comments) ? JSON.parse(JSON.stringify(post.comments)) : [];
+            if (!comments[cIndex]) return;
+            if (!Array.isArray(comments[cIndex].replies)) comments[cIndex].replies = [];
+            comments[cIndex].replies.push({ author: currentUser, text: val });
+            await firestore.collection('posts').doc(post.id).update({ comments });
+            setTimeout(() => { const el = document.getElementById(`comments_${pIndex}`); if (el) el.style.display = 'block'; }, 50);
         }
 
         /* ==========================================================================
@@ -873,6 +888,13 @@
 
         let roomUnsubscribe = null;
         let activeRoomData = null;
+
+        function renderRoomList() {
+            const list = document.getElementById('roomList') || document.getElementById('roomsList') || document.querySelector('.room-list');
+            if (!list) return;
+            const rooms = Object.values(db.rooms || {}).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+            list.innerHTML = rooms.length ? rooms.map(r => `<div class="room-item"><strong>${r.id}</strong><span>${(r.members||[]).length} üye</span></div>`).join('') : '<p>Henüz oda yok.</p>';
+        }
 
         async function createRoom() {
             await firebaseReady;
