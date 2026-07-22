@@ -513,10 +513,6 @@
         </div>
     </div>
 
-    <script>
-        /* ==========================================================================
-           1. KOD KORUMASI VE SAĞ TIK ENGELİ
-           ========================================================================== */
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script>
@@ -524,6 +520,10 @@
         firebase.initializeApp(firebaseConfig);
         const firestore = firebase.firestore();
     </script>
+    <script>
+        /* ==========================================================================
+           1. KOD KORUMASI VE SAĞ TIK ENGELİ
+           ========================================================================== */
         document.addEventListener('contextmenu', e => {
             e.preventDefault();
             showToast("Sistem Güvenliği: Sağ tık ve kaynak kod inceleme engellendi.", "error");
