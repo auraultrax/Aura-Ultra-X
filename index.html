@@ -6,6 +6,8 @@
     <title>Aura Ultra X | VIP Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
     
     <style>
         /* ==========================================================================
@@ -210,6 +212,13 @@
         .post-user { display: flex; align-items: center; gap: 12px; }
         .post-user-info { display: flex; flex-direction: column; }
         .post-user-name { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
+        .post-menu-wrap { position: relative; }
+        .post-menu-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 6px 10px; }
+        .post-menu { display: none; position: absolute; right: 0; top: 34px; z-index: 30; min-width: 180px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,.45); }
+        .post-menu.show { display: block; }
+        .post-menu button { display: block; width: 100%; text-align: left; background: transparent; border: none; color: var(--text-main); padding: 10px 12px; border-radius: 8px; cursor: pointer; }
+        .post-menu button:hover { background: var(--bg-surface-hover); }
+        .post-menu button.danger { color: var(--danger); }
         
         /* MAVİ TİK İKONU */
         .verified-badge { color: var(--verified); font-size: 1.05rem; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5)); }
@@ -369,7 +378,7 @@
             </div>
             <label class="kvkk-check">
                 <input type="checkbox" id="kvkkReadCheck">
-                <span>KVKK ve Gizlilik Bilgilendirmesini okudum ve anladım.</span>
+                <span>Okudum, ONAYLIYORUM</span>
             </label>
             <div class="kvkk-actions">
                 <button class="btn btn-outline" onclick="rejectKvkk()">Reddet</button>
@@ -382,6 +391,8 @@
     <div id="authOverlay">
         <div class="auth-card">
             <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra</div>
+            <input type="text" id="authFirstName" class="input-box" placeholder="Ad" autocomplete="given-name" style="display:none;">
+            <input type="text" id="authLastName" class="input-box" placeholder="Soyad" autocomplete="family-name" style="display:none;">
             <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı Adı" autocomplete="off">
             <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
             <select id="regionField" class="input-box">
@@ -389,6 +400,10 @@
                 <option>Türkiye</option><option>Avrupa</option><option>Asya</option><option>Kuzey Amerika</option>
                 <option>Güney Amerika</option><option>Afrika</option><option>Okyanusya</option><option>Orta Doğu</option>
             </select>
+            <label id="kvkkOpenLabel" class="kvkk-check" style="display:none;">
+                <input type="checkbox" id="kvkkOpenCheck" onchange="openKvkkFromCheckbox(this)">
+                <span>KVKK ve Gizlilik Bilgilendirmesini okudum ve anladım.</span>
+            </label>
             <div id="googleStatus"></div>
             <button class="btn google-btn" id="googleBtn" onclick="googleRegister()" style="display:none;"><i class="fa-brands fa-google"></i> Google ile Kayıt Ol</button>
             <button class="btn" style="width: 100%; font-size: 1.05rem; padding: 14px;" id="authBtn" onclick="handleAuth()">Giriş Yap</button>
@@ -419,6 +434,7 @@
                         <p id="sidebarRole">Kullanıcı</p>
                     </div>
                 </div>
+                <button id="installAppBtn" class="btn" style="width: 100%; margin-bottom: 10px; display:none;" onclick="installAuraApp()"><i class="fa-solid fa-download"></i> Uygulamayı Yükle</button>
                 <button class="btn btn-outline" style="width: 100%;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</button>
             </div>
         </aside>
@@ -598,6 +614,10 @@
             const register = !isLoginMode;
             document.getElementById('googleBtn').style.display = register && !pendingGoogleUser ? 'block' : 'none';
             document.getElementById('regionField').style.display = register ? 'block' : 'none';
+            document.getElementById('authFirstName').style.display = register ? 'block' : 'none';
+            document.getElementById('authLastName').style.display = register ? 'block' : 'none';
+            document.getElementById('kvkkOpenLabel').style.display = register ? 'flex' : 'none';
+            document.getElementById('kvkkOpenCheck').checked = !!kvkkAcceptedForRegistration;
             document.getElementById('authBtn').innerText = register ? 'Kayıt Ol' : 'Giriş Yap';
             document.getElementById('googleStatus').style.display = pendingGoogleUser ? 'block' : 'none';
             if (pendingGoogleUser) document.getElementById('googleStatus').innerText = `Google hesabı seçildi: ${pendingGoogleUser.email || 'hesap'}`;
@@ -613,23 +633,65 @@
             } catch (e) { console.error(e); showToast('Google ile kayıt başarısız: ' + (e.code || e.message), 'error'); }
         }
 
+        let deferredInstallPrompt = null;
+        function openKvkkFromCheckbox(box) {
+            if (box.checked) {
+                box.checked = false;
+                document.getElementById('kvkkModal').classList.add('show');
+                const text = document.querySelector('.kvkk-text');
+                const check = document.getElementById('kvkkReadCheck');
+                const btn = document.querySelector('#kvkkModal .kvkk-actions .btn:not(.btn-outline)');
+                check.checked = false;
+                btn.disabled = true;
+                btn.style.opacity = '0.45';
+                text.scrollTop = 0;
+                text.onscroll = () => {
+                    const atBottom = text.scrollTop + text.clientHeight >= text.scrollHeight - 8;
+                    if (atBottom) { btn.disabled = false; btn.style.opacity = '1'; }
+                };
+            }
+        }
         function acceptKvkk() {
+            const text = document.querySelector('.kvkk-text');
+            const atBottom = text.scrollTop + text.clientHeight >= text.scrollHeight - 8;
+            if (!atBottom) return showToast('Önce KVKK metninin tamamını okuyun.', 'error');
             if (!document.getElementById('kvkkReadCheck').checked) {
-                showToast('Devam etmek için bilgilendirme metnini okuduğunuzu onaylayın.', 'error');
+                showToast('Devam etmek için “Okudum, ONAYLIYORUM” kutusunu işaretleyin.', 'error');
                 return;
             }
             kvkkAcceptedForRegistration = true;
+            document.getElementById('kvkkOpenCheck').checked = true;
             document.getElementById('kvkkModal').classList.remove('show');
-            showToast('Bilgilendirme tamamlandı. Kayıt formunu doldurabilirsiniz.', 'success');
+            showToast('KVKK onayınız kaydedilecek.', 'success');
         }
-
         function rejectKvkk() {
             kvkkAcceptedForRegistration = false;
             pendingGoogleUser = null;
+            document.getElementById('kvkkOpenCheck').checked = false;
             document.getElementById('kvkkModal').classList.remove('show');
             updateAuthForm();
             showToast('Bilgilendirme kabul edilmedi. Kayıt işlemi iptal edildi.', 'error');
         }
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.style.display = 'flex';
+        });
+        async function installAuraApp() {
+            if (!deferredInstallPrompt) {
+                showToast('Tarayıcınız şu anda uygulama yükleme penceresi sunmuyor. Tarayıcı menüsünden “Uygulamayı yükle” seçeneğini kullanın.', 'error');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('installAppBtn').style.display = 'none';
+        }
+        window.addEventListener('appinstalled', () => {
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.style.display = 'none';
+        });
     </script>
     <script>
         /* ==========================================================================
@@ -696,7 +758,7 @@
         // Admin hesabını Firebase'e bir kez yaz
         firestore.collection('users').doc(ADMIN_USER).get().then(doc => {
             if (!doc.exists) {
-                return firestore.collection('users').doc(ADMIN_USER).set({ password: ADMIN_PASS, votes: 0, isLider: true });
+                return firestore.collection('users').doc(ADMIN_USER).set({ password: ADMIN_PASS, firstName: 'Aura', lastName: 'X', displayName: 'Aura X', votes: 0, isLider: true });
             }
         }).catch(console.error);
 
@@ -749,8 +811,11 @@
             await firebaseReady;
             const u = document.getElementById('authUsername').value.trim();
             const p = document.getElementById('authPassword').value.trim();
+            const firstName = document.getElementById('authFirstName').value.trim();
+            const lastName = document.getElementById('authLastName').value.trim();
             const region = document.getElementById('regionField').value;
             if (!u || !p) return showToast('Kullanıcı adı ve şifre gereklidir.', 'error');
+            if (!isLoginMode && (!firstName || !lastName)) return showToast('Ad ve soyad gereklidir.', 'error');
             if (!isLoginMode && !region) return showToast('Kayıt olmak için bölgenizi seçin.', 'error');
             if (!isLoginMode && !kvkkAcceptedForRegistration) return showToast('Önce zorunlu KVKK ve Gizlilik Bilgilendirmesini tamamlayın.', 'error');
             if (db.banned.includes(u)) return showToast('Bu kullanıcı adı yasaklanmıştır.', 'error');
@@ -764,7 +829,7 @@
                 } else {
                     if (!pendingGoogleUser) return showToast('Önce Google ile Kayıt Ol butonuna basıp hesabını seç.', 'error');
                     if (snap.exists) return showToast('Bu kullanıcı adı önceden alınmış.', 'error');
-                    await ref.set({ password: p, votes: 0, isLider: false, region, googleUid: pendingGoogleUser.uid, googleEmail: pendingGoogleUser.email || null, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
+                    await ref.set({ password: p, firstName, lastName, displayName: `${firstName} ${lastName}`, votes: 0, isLider: false, region, kvkkAccepted: true, kvkkAcceptedAt: Date.now(), kvkkVersion: '1.0', googleUid: pendingGoogleUser.uid, googleEmail: pendingGoogleUser.email || null, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
                     loginSuccess(u);
                 }
             } catch (e) { console.error(e); showToast('Kayıt/giriş hatası: ' + (e.code || e.message), 'error'); }
@@ -790,7 +855,8 @@
             
             // Mavi tik kontrolü profil isminde de gösterilsin
             const userBadge = (currentUser === ADMIN_USER || db.users[currentUser]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
-            document.getElementById('sidebarUsername').innerHTML = `${currentUser} ${userBadge}`;
+            const visibleName = currentUser === ADMIN_USER ? 'Aura X' : (db.users[currentUser]?.displayName || 'Kullanıcı');
+            document.getElementById('sidebarUsername').innerHTML = `${visibleName} ${userBadge}`;
             
             if (currentUser === ADMIN_USER) {
                 document.getElementById('sidebarRole').innerHTML = `<span style="color:var(--danger); font-weight:bold;">Sistem Yöneticisi</span>`;
@@ -920,6 +986,7 @@
             
             db.posts.forEach((post, pIndex) => {
                 const uData = db.users[post.author];
+                const visibleAuthor = post.author === ADMIN_USER ? 'Aura X' : (uData?.displayName || 'Kullanıcı');
                 
                 // MAVİ TİK: A_UR_A_XX kullanıcısına özel zorunlu ikon
                 const isVerified = (post.author === ADMIN_USER || uData?.verified) ? `<i class="fa-solid fa-circle-check verified-badge" title="Onaylı Hesap"></i>` : '';
@@ -938,11 +1005,11 @@
                     post.comments.forEach((c, cIndex) => {
                         let repliesHtml = '';
                         if (c.replies) c.replies.forEach(r => {
-                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">@${r.author}:</span> <span class="comment-text">${r.text}</span></div>`;
+                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">${r.author === ADMIN_USER ? 'Aura X' : (db.users[r.author]?.displayName || 'Kullanıcı')}:</span> <span class="comment-text">${r.text}</span></div>`;
                         });
                         commentsHtml += `
                             <div class="comment-box">
-                                <div class="comment-header">@${c.author}</div>
+                                <div class="comment-header">${c.author === ADMIN_USER ? 'Aura X' : (db.users[c.author]?.displayName || 'Kullanıcı')}</div>
                                 <div class="comment-text">${c.text}</div>
                                 ${repliesHtml}
                                 <div class="comment-input-row">
@@ -957,13 +1024,16 @@
                     <div class="post-card">
                         <div class="post-header">
                             <div class="post-user">
-                                <div class="user-avatar-mini">${post.author.charAt(0).toUpperCase()}</div>
+                                <div class="user-avatar-mini">${visibleAuthor.charAt(0).toUpperCase()}</div>
                                 <div class="post-user-info">
-                                    <span class="post-user-name">@${post.author} ${isVerified} ${isLider}</span>
+                                    <span class="post-user-name">${visibleAuthor} ${isVerified} ${isLider}</span>
                                     <span class="post-time">${timeAgo(post.timestamp)}</span>
                                 </div>
                             </div>
-                            <button class="btn-vote" onclick="voteUser('${post.author}')">Oy Ver <i class="fa-solid fa-caret-up"></i></button>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <button class="btn-vote" onclick="voteUser('${post.author}')">Oy Ver <i class="fa-solid fa-caret-up"></i></button>
+                                ${currentUser === ADMIN_USER ? `<div class="post-menu-wrap"><button class="post-menu-btn" onclick="togglePostMenu('${post.id}')"><i class="fa-solid fa-ellipsis"></i></button><div class="post-menu" id="postMenu_${post.id}"><button class="danger" onclick="deletePost('${post.id}')"><i class="fa-solid fa-trash"></i> Gönderiyi Sil</button><button class="danger" onclick="banPostAuthor('${post.author}')"><i class="fa-solid fa-ban"></i> Kullanıcıyı Banla</button></div></div>` : ''}
+                            </div>
                         </div>
                         <div class="post-text">${post.text}</div>
                         ${imgHtml}
@@ -987,6 +1057,35 @@
                     </div>
                 `;
             });
+        }
+
+        function togglePostMenu(postId) {
+            if (currentUser !== ADMIN_USER) return;
+            document.querySelectorAll('.post-menu.show').forEach(el => { if (el.id !== `postMenu_${postId}`) el.classList.remove('show'); });
+            const menu = document.getElementById(`postMenu_${postId}`);
+            if (menu) menu.classList.toggle('show');
+        }
+        async function deletePost(postId) {
+            if (currentUser !== ADMIN_USER) return showToast('Yetkiniz yok.', 'error');
+            if (!confirm('Bu gönderi kalıcı olarak silinsin mi?')) return;
+            await firestore.collection('posts').doc(postId).delete();
+            showToast('Gönderi silindi.');
+        }
+        async function banPostAuthor(username) {
+            if (currentUser !== ADMIN_USER) return showToast('Yetkiniz yok.', 'error');
+            if (username === ADMIN_USER) return;
+            if (!confirm('Bu kullanıcı banlansın ve mevcut gönderisi silinsin mi?')) return;
+            const user = db.users[username] || {};
+            if (!db.banned.includes(username)) db.banned.push(username);
+            saveDB();
+            await firestore.collection('bannedUsers').doc(username).set({ bannedAt: Date.now(), bannedBy: ADMIN_USER });
+            if (user.ipHash) await firestore.collection('bannedIPs').doc(user.ipHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
+            if (user.deviceHash) await firestore.collection('bannedDevices').doc(user.deviceHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
+            const posts = await firestore.collection('posts').where('author', '==', username).get();
+            const batch = firestore.batch();
+            posts.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            showToast('Kullanıcı banlandı.');
         }
 
         function toggleComments(index) {
@@ -1336,5 +1435,10 @@
             showToast("Şikayet listeden kaldırıldı.");
         }
     </script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+}
+</script>
 </body>
 </html>
