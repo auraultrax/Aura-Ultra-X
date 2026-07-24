@@ -365,52 +365,6 @@
     <!-- TOAST NOTIFICATION ALANI -->
     <div id="toastContainer"></div>
 
-    <!-- ZORUNLU KVKK BİLGİLENDİRME EKRANI -->
-    <div id="kvkkModal" role="dialog" aria-modal="true" aria-labelledby="kvkkTitle">
-        <div class="kvkk-box">
-            <h2 id="kvkkTitle">KVKK ve Gizlilik Bilgilendirmesi</h2>
-            <div class="kvkk-text">
-                <p><strong>Aura Ultra X</strong> hesabınızı oluştururken verdiğiniz bilgiler, hesabınızı oluşturmak ve platformun güvenliğini sağlamak amacıyla işlenebilir.</p>
-                <p>Güvenlik ve kötüye kullanımı önleme amacıyla ağ/IP ve cihaz bilgileri, mümkün olan ölçüde hashlenmiş veya teknik güvenlik kimliği olarak işlenebilir. Bu bilgiler kullanıcılar arasında herkese açık şekilde gösterilmez.</p>
-                <p>Google hesabı ile kayıt sırasında Google tarafından sağlanan hesap kimliği, hesabınızı eşleştirmek amacıyla kullanılabilir. Gereksiz kişisel veriler mümkün olduğunca toplanmamalıdır.</p>
-                <p>Veriler yalnızca belirli ve meşru amaçlarla, amaçla bağlantılı ve ölçülü şekilde işlenmeli; gerekli olmayan veriler gereksiz yere saklanmamalıdır.</p>
-                <p>Verilerinizle ilgili bilgi almak veya haklarınızı kullanmak için uygulama yöneticisiyle iletişime geçebilirsiniz. Bu ekran bir bilgilendirme metnidir; gerçek kullanıma açmadan önce bir ebeveyn/veli ve gerektiğinde hukuk uzmanı tarafından gözden geçirilmelidir.</p>
-            </div>
-            <label class="kvkk-check">
-                <input type="checkbox" id="kvkkReadCheck">
-                <span>Okudum, ONAYLIYORUM</span>
-            </label>
-            <div class="kvkk-actions">
-                <button class="btn btn-outline" onclick="rejectKvkk()">Reddet</button>
-                <button class="btn" onclick="acceptKvkk()">Okudum ve Devam Et</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- AUTH OVERLAY -->
-    <div id="authOverlay">
-        <div class="auth-card">
-            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra</div>
-            <input type="text" id="authFirstName" class="input-box" placeholder="Ad" autocomplete="given-name" style="display:none;">
-            <input type="text" id="authLastName" class="input-box" placeholder="Soyad" autocomplete="family-name" style="display:none;">
-            <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı Adı" autocomplete="off">
-            <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
-            <select id="regionField" class="input-box">
-                <option value="">Bulunduğunuz Bölgeyi Seçin</option>
-                <option>Türkiye</option><option>Avrupa</option><option>Asya</option><option>Kuzey Amerika</option>
-                <option>Güney Amerika</option><option>Afrika</option><option>Okyanusya</option><option>Orta Doğu</option>
-            </select>
-            <label id="kvkkOpenLabel" class="kvkk-check" style="display:none;">
-                <input type="checkbox" id="kvkkOpenCheck" onchange="openKvkkFromCheckbox(this)">
-                <span>KVKK ve Gizlilik Bilgilendirmesini okudum ve anladım.</span>
-            </label>
-            <div id="googleStatus"></div>
-            <button class="btn google-btn" id="googleBtn" onclick="googleRegister()" style="display:none;"><i class="fa-brands fa-google"></i> Google ile Kayıt Ol</button>
-            <button class="btn" style="width: 100%; font-size: 1.05rem; padding: 14px;" id="authBtn" onclick="handleAuth()">Giriş Yap</button>
-            <p class="auth-switch" onclick="toggleAuthMode()" id="authSwitchText">Hesabın yok mu? <span>Kayıt Ol</span></p>
-        </div>
-    </div>
-
     <!-- MAIN APP STRUCTURE -->
     <div id="app">
         
