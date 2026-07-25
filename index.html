@@ -180,6 +180,7 @@
         .user-info-mini { flex: 1; overflow: hidden; }
         .user-info-mini h4 { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
         .user-info-mini p { font-size: 0.8rem; color: var(--text-muted); }
+        .username-sub { display:block; margin-top:2px; font-size:0.72rem; font-weight:500; color:#a6a6b3; opacity:.85; }
         
         .main-content { min-height: 100vh; position: relative; border-right: 1px solid var(--border); }
         .view-section { display: none; padding-bottom: 50px; animation: fadeIn 0.3s ease; }
@@ -351,8 +352,6 @@
         .google-btn:hover { background:#f4f4f4; }
         #regionField { display:none; }
         #googleStatus { display:none; font-size:.85rem; color:var(--text-muted); margin-bottom:10px; text-align:center; }
-        #kvkkModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.82); align-items:center; justify-content:center; padding:18px; }
-        #kvkkModal.show { display:flex; }
         .kvkk-box { width:min(720px,100%); max-height:88vh; overflow:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
         .kvkk-box h2 { margin-top:0; }
         .kvkk-text { max-height:45vh; overflow:auto; padding:16px; background:rgba(0,0,0,.18); border-radius:12px; line-height:1.65; color:var(--text-muted); }
@@ -364,52 +363,6 @@
 
     <!-- TOAST NOTIFICATION ALANI -->
     <div id="toastContainer"></div>
-
-
-    <!-- AUTH SCREEN -->
-    <div id="authOverlay">
-        <div class="auth-card">
-            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura</div>
-
-            <div id="authRegisterFields">
-                <input type="text" id="authFirstName" class="input-box" placeholder="Ad">
-                <input type="text" id="authLastName" class="input-box" placeholder="Soyad">
-            </div>
-
-            <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı adı">
-            <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
-
-            <select id="regionField" class="input-box">
-                <option value="">Bölge / Ülke seçin</option>
-                <option value="tr">🇹🇷 Türkiye</option>
-                <option value="ru">🇷🇺 Rusya</option>
-                <option value="de">🇩🇪 Almanya</option>
-                <option value="us">🇺🇸 Amerika Birleşik Devletleri</option>
-                <option value="gb">🇬🇧 Birleşik Krallık</option>
-                <option value="fr">🇫🇷 Fransa</option>
-                <option value="other">🌍 Diğer</option>
-            </select>
-
-            <button id="authBtn" class="btn" style="width:100%; margin-top:10px;" onclick="handleAuth()">Giriş Yap</button>
-
-            <button id="forgotPasswordBtn" class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="openForgotPassword()">
-                <i class="fa-solid fa-key"></i> Şifremi Unuttum
-            </button>
-
-            <div id="kvkkInfoText" style="font-size:0.78rem; line-height:1.5; color:var(--text-muted); margin:14px 0 8px; text-align:center;">
-                Kayıt olarak kişisel verilerinizin Aura Ultra X hizmetinin sunulması,
-                hesap güvenliği ve sistemin çalışması amacıyla işlenebileceği konusunda
-                bilgilendirilmiş olursunuz.
-                <br><br>
-                <strong>Eğer bu verilerin kullanılmasına izin vermiyorsanız,
-                bu işleme devam etmeyiniz.</strong>
-            </div>
-
-            <div id="authSwitchText" class="auth-switch" onclick="toggleAuthMode()">
-                Hesabın yok mu? <span>Kayıt Ol</span>
-            </div>
-        </div>
-    </div>
 
     <!-- MAIN APP STRUCTURE -->
     <div id="app">
@@ -567,6 +520,52 @@
         <a class="mobile-nav-item" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></a>
     </div>
 
+    <!-- AUTH SCREEN -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura</div>
+            <div id="googleStatus"></div>
+            <button id="googleBtn" class="btn google-btn" onclick="googleRegister()">
+                <i class="fa-brands fa-google"></i> Google ile Kayıt Ol
+            </button>
+            <input type="text" id="authFirstName" class="input-box" placeholder="Adınız">
+            <input type="text" id="authLastName" class="input-box" placeholder="Soyadınız">
+            <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı adı">
+            <select id="regionField" class="input-box">
+                <option value="">Bölge / Ülke seçin</option>
+            </select>
+            <input type="password" id="authPassword" class="input-box" placeholder="Şifre">
+            <div id="kvkkInfoText" style="font-size:0.78rem; line-height:1.5; color:var(--text-muted); margin:14px 0 8px; text-align:center; display:none;">
+                Kayıt olarak kişisel verilerinizin hizmetin sunulması, hesap güvenliği ve sistemin çalışması amacıyla işlenebileceği konusunda bilgilendirilmiş olursunuz.<br><br>
+                <strong>Eğer bu verilerin kullanılmasına izin vermiyorsanız, bu işleme devam etmeyiniz.</strong>
+            </div>
+            <button id="authBtn" class="btn" style="width:100%;" onclick="handleAuth()">Giriş Yap</button>
+            <button id="forgotPasswordBtn" class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="openForgotPassword()">
+                <i class="fa-solid fa-key"></i> Şifremi Unuttum
+            </button>
+            <div id="authSwitchText" class="auth-switch" onclick="toggleAuthMode()">Hesabın yok mu? <span>Kayıt Ol</span></div>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="forgotPasswordModal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.82); align-items:center; justify-content:center; padding:18px;">
+        <div class="auth-card" style="max-width:430px;">
+            <h2 style="margin-bottom:10px;">Şifre Yenileme</h2>
+            <p style="color:var(--text-muted); font-size:.9rem; margin-bottom:18px;">
+                Google ile kayıtlı hesabınızı doğrulayarak şifrenizi yenileyebilirsiniz.
+            </p>
+            <input type="text" id="resetUsername" class="input-box" placeholder="Kullanıcı adı">
+            <button class="btn" style="width:100%;" onclick="verifyGoogleForPasswordReset()">
+                <i class="fa-brands fa-google"></i> Google Hesabımla Doğrula
+            </button>
+            <div id="resetGoogleStatus" style="display:none; color:var(--text-muted); font-size:.85rem; margin:10px 0;"></div>
+            <input type="password" id="newPassword" class="input-box" placeholder="Yeni şifre" style="display:none;">
+            <input type="password" id="newPasswordAgain" class="input-box" placeholder="Yeni şifre tekrar" style="display:none;">
+            <button id="resetPasswordBtn" class="btn" style="width:100%; display:none;" onclick="resetPassword()">Yeni Şifreyi Kaydet</button>
+            <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="closeForgotPassword()">İptal</button>
+        </div>
+    </div>
+
     <!-- ACTION SHEET (UZUN BASMA MENÜSÜ) -->
     <div id="actionSheetOverlay" onclick="if(event.target===this) closeActionSheet()">
         <div id="actionSheet">
@@ -589,34 +588,142 @@
         // Firebase oturumu: Firestore kuralları request.auth gerektiriyorsa erişim sağlar.
         let firebaseReady = firebase.auth().currentUser ? Promise.resolve(firebase.auth().currentUser) : firebase.auth().signInAnonymously().then(result => result.user).catch(err => { console.error('Firebase Auth:', err); throw err; });
 
-        let currentNetwork = { ip: null, ipHash: null, deviceHash: null };
-        async function sha256(value) { const data = new TextEncoder().encode(value || ''); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join(''); }
-        async function getNetworkIdentity() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-                const data = await response.json(); const ip = data.ip || '';
-                const device = [navigator.userAgent, navigator.platform, navigator.language, screen.width, screen.height].join('|');
-                return { ip, ipHash: await sha256(ip), deviceHash: await sha256(device) };
-            } catch (e) { return { ip: null, ipHash: null, deviceHash: await sha256([navigator.userAgent, navigator.platform].join('|')) }; }
-        }
-        async function isBannedNetwork(identity) {
-            // Admin hesabı ağ/cihaz banlarından muaftır.
-            if (typeof currentUser !== 'undefined' && currentUser === ADMIN_USER) return false;
-            if (!identity) return false;
-            if (identity.ipHash && (await firestore.collection('bannedIPs').doc(identity.ipHash).get()).exists) return true;
-            if (identity.deviceHash && (await firestore.collection('bannedDevices').doc(identity.deviceHash).get()).exists) return true;
-            return false;
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        let pendingGoogleUser = null;
+        const countryList = [
+            ['TR','Türkiye'],['RU','Rusya'],['DE','Almanya'],['US','Amerika Birleşik Devletleri'],['GB','Birleşik Krallık'],['FR','Fransa'],['IT','İtalya'],['ES','İspanya'],['NL','Hollanda'],['BE','Belçika'],['AT','Avusturya'],['CH','İsviçre'],['SE','İsveç'],['NO','Norveç'],['DK','Danimarka'],['FI','Finlandiya'],['PL','Polonya'],['UA','Ukrayna'],['RO','Romanya'],['BG','Bulgaristan'],['GR','Yunanistan'],['PT','Portekiz'],['IE','İrlanda'],['CZ','Çekya'],['SK','Slovakya'],['HU','Macaristan'],['RS','Sırbistan'],['HR','Hırvatistan'],['BA','Bosna Hersek'],['AL','Arnavutluk'],['MK','Kuzey Makedonya'],['SI','Slovenya'],['EE','Estonya'],['LV','Letonya'],['LT','Litvanya'],['IS','İzlanda'],['CA','Kanada'],['MX','Meksika'],['BR','Brezilya'],['AR','Arjantin'],['CL','Şili'],['CO','Kolombiya'],['PE','Peru'],['AU','Avustralya'],['NZ','Yeni Zelanda'],['CN','Çin'],['JP','Japonya'],['KR','Güney Kore'],['IN','Hindistan'],['PK','Pakistan'],['ID','Endonezya'],['MY','Malezya'],['SG','Singapur'],['TH','Tayland'],['VN','Vietnam'],['PH','Filipinler'],['SA','Suudi Arabistan'],['AE','Birleşik Arap Emirlikleri'],['IL','İsrail'],['IR','İran'],['IQ','Irak'],['KZ','Kazakistan'],['UZ','Özbekistan'],['AZ','Azerbaycan'],['GE','Gürcistan'],['AM','Ermenistan'],['EG','Mısır'],['ZA','Güney Afrika'],['NG','Nijerya'],['MA','Fas'],['DZ','Cezayir'],['TN','Tunus'],['KE','Kenya'],['ET','Etiyopya'],['GH','Gana'],['TZ','Tanzanya'],['SN','Senegal'],['CL','Şili'],['UY','Uruguay'],['VE','Venezuela'],['CR','Kosta Rika'],['PA','Panama'],['DO','Dominik Cumhuriyeti'],['CU','Küba'],['JM','Jamaika'],['PR','Porto Riko'],['QA','Katar'],['KW','Kuveyt'],['OM','Umman'],['JO','Ürdün'],['LB','Lübnan'],['SY','Suriye'],['YE','Yemen'],['AF','Afganistan'],['BD','Bangladeş'],['NP','Nepal'],['LK','Sri Lanka'],['MM','Myanmar'],['KH','Kamboçya'],['LA','Laos'],['MN','Moğolistan'],['KP','Kuzey Kore'],['HK','Hong Kong'],['TW','Tayvan'],['MO','Makao'],['FJ','Fiji'],['PG','Papua Yeni Gine'],['WS','Samoa'],['TO','Tonga'],['VU','Vanuatu'],['SB','Solomon Adaları'],['NC','Yeni Kaledonya'],['PF','Fransız Polinezyası'],['MT','Malta'],['CY','Kıbrıs'],['LU','Lüksemburg'],['LI','Lihtenştayn'],['MC','Monako'],['SM','San Marino'],['VA','Vatikan'],['AD','Andorra'],['MD','Moldova'],['BY','Belarus'],['BA','Bosna Hersek'],['ME','Karadağ'],['XK','Kosova'],['TM','Türkmenistan'],['KG','Kırgızistan'],['TJ','Tacikistan'],['AF','Afganistan'],['SD','Sudan'],['SS','Güney Sudan'],['LY','Libya'],['ET','Etiyopya'],['UG','Uganda'],['RW','Ruanda'],['ZW','Zimbabve'],['ZM','Zambiya'],['MZ','Mozambik'],['AO','Angola'],['NA','Namibya'],['BW','Botsvana'],['MG','Madagaskar'],['MU','Mauritius'],['SC','Seyşeller'],['CV','Yeşil Burun Adaları'],['IS','İzlanda'],['GL','Grönland'],['FO','Faroe Adaları']
+        ];
+        function populateCountries() {
+            const select = document.getElementById('regionField');
+            if (!select || select.options.length > 1) return;
+            countryList.forEach(([code, name]) => {
+                const option = document.createElement('option'); option.value = code; option.textContent = name; select.appendChild(option);
+            });
         }
         function updateAuthForm() {
             const register = !isLoginMode;
-
-            document.getElementById('authRegisterFields').style.display = register ? 'block' : 'none';
+            document.getElementById('googleBtn').style.display = register ? 'block' : 'none';
+            document.getElementById('googleBtn').innerHTML = register ? '<i class="fa-brands fa-google"></i> Google ile Kayıt Ol' : '<i class="fa-brands fa-google"></i> Google ile Giriş Yap';
             document.getElementById('regionField').style.display = register ? 'block' : 'none';
-            document.getElementById('forgotPasswordBtn').style.display = isLoginMode ? 'block' : 'none';
+            document.getElementById('authFirstName').style.display = register ? 'block' : 'none';
+            document.getElementById('authLastName').style.display = register ? 'block' : 'none';
             document.getElementById('kvkkInfoText').style.display = register ? 'block' : 'none';
             document.getElementById('authBtn').innerText = register ? 'Kayıt Ol' : 'Giriş Yap';
+            document.getElementById('forgotPasswordBtn').style.display = isLoginMode ? 'block' : 'none';
+            document.getElementById('googleStatus').style.display = pendingGoogleUser ? 'block' : 'none';
+            if (pendingGoogleUser) {
+                document.getElementById('googleStatus').innerText = `Google hesabı seçildi: ${pendingGoogleUser.email || 'hesap'}`;
+            }
+            populateCountries();
+        }
+        let pendingResetUsername = null;
+
+        function openForgotPassword() {
+            document.getElementById('forgotPasswordModal').style.display = 'flex';
+            document.getElementById('resetUsername').value = '';
+            document.getElementById('resetGoogleStatus').style.display = 'none';
+            document.getElementById('newPassword').style.display = 'none';
+            document.getElementById('newPasswordAgain').style.display = 'none';
+            document.getElementById('resetPasswordBtn').style.display = 'none';
+            pendingResetUsername = null;
         }
 
+        function closeForgotPassword() {
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+            pendingResetUsername = null;
+        }
+
+        async function verifyGoogleForPasswordReset() {
+            const username = document.getElementById('resetUsername').value.trim();
+            if (!username) return showToast('Kullanıcı adınızı yazın.', 'error');
+
+            try {
+                const snap = await firestore.collection('users').doc(username).get();
+                if (!snap.exists) return showToast('Bu kullanıcı bulunamadı.', 'error');
+
+                const userData = snap.data();
+                if (!userData.googleUid) {
+                    return showToast('Bu hesap Google hesabına bağlı değil. Bu hesap için güvenli şifre sıfırlama yapılandırılmamış.', 'error');
+                }
+
+                const result = await firebase.auth().signInWithPopup(googleProvider);
+                if (result.user.uid !== userData.googleUid) {
+                    await firebase.auth().signOut();
+                    return showToast('Bu Google hesabı bu kullanıcıya ait değil.', 'error');
+                }
+
+                pendingResetUsername = username;
+                document.getElementById('resetGoogleStatus').style.display = 'block';
+                document.getElementById('resetGoogleStatus').innerText = 'Google hesabı doğrulandı. Yeni şifrenizi belirleyin.';
+                document.getElementById('newPassword').style.display = 'block';
+                document.getElementById('newPasswordAgain').style.display = 'block';
+                document.getElementById('resetPasswordBtn').style.display = 'block';
+            } catch (e) {
+                console.error(e);
+                showToast('Google doğrulaması başarısız: ' + (e.code || e.message), 'error');
+            }
+        }
+
+        async function resetPassword() {
+            if (!pendingResetUsername) return showToast('Önce Google hesabınızı doğrulayın.', 'error');
+
+            const p1 = document.getElementById('newPassword').value;
+            const p2 = document.getElementById('newPasswordAgain').value;
+
+            if (!p1 || p1.length < 6) return showToast('Yeni şifre en az 6 karakter olmalıdır.', 'error');
+            if (p1 !== p2) return showToast('Şifreler eşleşmiyor.', 'error');
+
+            try {
+                await firestore.collection('users').doc(pendingResetUsername).update({
+                    password: p1,
+                    passwordUpdatedAt: Date.now()
+                });
+
+                showToast('Şifreniz başarıyla yenilendi.', 'success');
+                closeForgotPassword();
+            } catch (e) {
+                console.error(e);
+                showToast('Şifre yenilenemedi: ' + (e.code || e.message), 'error');
+            }
+        }
+
+        async function googleRegister() {
+            try {
+                const result = await firebase.auth().signInWithPopup(googleProvider);
+                const googleUser = result.user;
+                if (isLoginMode) {
+                    const snap = await firestore.collection('users').where('googleUid', '==', googleUser.uid).limit(1).get();
+                    if (snap.empty) return showToast('Bu Google hesabıyla kayıtlı bir Aura hesabı bulunamadı.', 'error');
+                    loginSuccess(snap.docs[0].id);
+                    return;
+                }
+                pendingGoogleUser = googleUser;
+                updateAuthForm();
+                showToast('Google hesabı seçildi. Kayıt bilgilerinizi tamamlayın.', 'success');
+            } catch (e) { console.error(e); showToast('Google işlemi başarısız: ' + (e.code || e.message), 'error'); }
+        }
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.style.display = 'flex';
+        });
+        async function installAuraApp() {
+            if (!deferredInstallPrompt) {
+                showToast('Tarayıcınız şu anda uygulama yükleme penceresi sunmuyor. Tarayıcı menüsünden “Uygulamayı yükle” seçeneğini kullanın.', 'error');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('installAppBtn').style.display = 'none';
+        }
+        window.addEventListener('appinstalled', () => {
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.style.display = 'none';
+        });
+    </script>
+    <script>
         /* ==========================================================================
            1. KOD KORUMASI VE SAĞ TIK ENGELİ
            ========================================================================== */
@@ -716,64 +823,91 @@
            4. BAŞLATMA VE YETKİLENDİRME
            ========================================================================== */
         window.onload = async () => {
+            populateCountries();
             await firebaseReady; updateAuthForm();
             if (currentUser && !db.banned.includes(currentUser)) {
-                currentNetwork = await getNetworkIdentity();
-                if (currentUser !== ADMIN_USER && await isBannedNetwork(currentNetwork)) { alert('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); return; }
                 setupAppUI();
             } else if (db.banned.includes(currentUser)) { alert('Bu hesap kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); }
         };
 
         function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
+            isLoginMode = !isLoginMode; pendingGoogleUser = null;
             document.getElementById('authSwitchText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
             updateAuthForm();
         }
 
         async function handleAuth() {
             await firebaseReady;
+
             const u = document.getElementById('authUsername').value.trim();
             const p = document.getElementById('authPassword').value.trim();
             const firstName = document.getElementById('authFirstName').value.trim();
             const lastName = document.getElementById('authLastName').value.trim();
             const region = document.getElementById('regionField').value;
-            if (!u || !p) return showToast('Kullanıcı adı ve şifre gereklidir.', 'error');
+
+            if (!u) return showToast('Kullanıcı adı gereklidir.', 'error');
+            if (!p) return showToast('Şifre gereklidir.', 'error');
             if (!isLoginMode && (!firstName || !lastName)) return showToast('Ad ve soyad gereklidir.', 'error');
-            if (!isLoginMode && !region) return showToast('Kayıt olmak için bölgenizi seçin.', 'error');
+            if (!isLoginMode && !region) return showToast('Kayıt olmak için bölge / ülke seçin.', 'error');
             if (db.banned.includes(u)) return showToast('Bu kullanıcı adı yasaklanmıştır.', 'error');
+
             try {
-                currentNetwork = await getNetworkIdentity();
-                if (u !== ADMIN_USER && await isBannedNetwork(currentNetwork)) return showToast('Bu ağ veya cihaz Aura Ultra sisteminden kalıcı olarak engellenmiştir.', 'error');
-                const ref = firestore.collection('users').doc(u); const snap = await ref.get();
+                const ref = firestore.collection('users').doc(u);
+                const snap = await ref.get();
+
                 if (isLoginMode) {
-                    if (snap.exists && snap.data().password === p) { await ref.update({ lastIpHash: currentNetwork.ipHash || null, lastDeviceHash: currentNetwork.deviceHash || null, lastSeenAt: Date.now() }); loginSuccess(u); }
-                    else showToast('Hatalı kullanıcı adı veya şifre.', 'error');
+                    if (!snap.exists) return showToast('Hatalı kullanıcı adı veya şifre.', 'error');
+
+                    const userData = snap.data();
+                    if (userData.password !== p) {
+                        return showToast('Hatalı kullanıcı adı veya şifre.', 'error');
+                    }
+
+                    loginSuccess(u);
                 } else {
                     if (snap.exists) return showToast('Bu kullanıcı adı önceden alınmış.', 'error');
-                    await ref.set({ password: p, firstName, lastName, displayName: `${firstName} ${lastName}`, votes: 0, isLider: false, region, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
+
+                    if (pendingGoogleUser) {
+                        const googleSnap = await firestore.collection('users')
+                            .where('googleUid', '==', pendingGoogleUser.uid)
+                            .limit(1)
+                            .get();
+
+                        if (!googleSnap.empty) {
+                            return showToast('Bu Google hesabı zaten bir Aura hesabına bağlı.', 'error');
+                        }
+
+                        await ref.set({
+                            password: p,
+                            firstName,
+                            lastName,
+                            displayName: `${firstName} ${lastName}`,
+                            votes: 0,
+                            isLider: false,
+                            region,
+                            googleUid: pendingGoogleUser.uid,
+                            googleEmail: pendingGoogleUser.email || null,
+                            createdAt: Date.now()
+                        });
+                    } else {
+                        await ref.set({
+                            password: p,
+                            firstName,
+                            lastName,
+                            displayName: `${firstName} ${lastName}`,
+                            votes: 0,
+                            isLider: false,
+                            region,
+                            createdAt: Date.now()
+                        });
+                    }
+
                     loginSuccess(u);
                 }
-            } catch (e) { console.error(e); showToast('Kayıt/giriş hatası: ' + (e.code || e.message), 'error'); }
-        }
-
-        function openForgotPassword() {
-            const username = prompt('Kullanıcı adınızı yazın:');
-            if (!username) return;
-
-            const newPassword = prompt('Yeni şifrenizi yazın:');
-            if (!newPassword) return;
-
-            firestore.collection('users').doc(username.trim()).get().then(async snap => {
-                if (!snap.exists) return showToast('Bu kullanıcı bulunamadı.', 'error');
-                await firestore.collection('users').doc(username.trim()).update({
-                    password: newPassword.trim(),
-                    passwordChangedAt: Date.now()
-                });
-                showToast('Şifreniz başarıyla yenilendi.', 'success');
-            }).catch(err => {
-                console.error(err);
-                showToast('Şifre yenilenirken hata oluştu.', 'error');
-            });
+            } catch (e) {
+                console.error(e);
+                showToast('Kayıt/giriş hatası: ' + (e.code || e.message), 'error');
+            }
         }
 
         function loginSuccess(u) {
@@ -797,7 +931,7 @@
             // Mavi tik kontrolü profil isminde de gösterilsin
             const userBadge = (currentUser === ADMIN_USER || db.users[currentUser]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
             const visibleName = currentUser === ADMIN_USER ? 'Aura X' : (db.users[currentUser]?.displayName || 'Kullanıcı');
-            document.getElementById('sidebarUsername').innerHTML = `${visibleName} ${userBadge}`;
+            document.getElementById('sidebarUsername').innerHTML = userNameHtml(currentUser);
             
             if (currentUser === ADMIN_USER) {
                 document.getElementById('sidebarRole').innerHTML = `<span style="color:var(--danger); font-weight:bold;">Sistem Yöneticisi</span>`;
@@ -946,11 +1080,11 @@
                     post.comments.forEach((c, cIndex) => {
                         let repliesHtml = '';
                         if (c.replies) c.replies.forEach(r => {
-                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">${r.author === ADMIN_USER ? 'Aura X' : (db.users[r.author]?.displayName || 'Kullanıcı')}:</span> <span class="comment-text">${r.text}</span></div>`;
+                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">${userNameHtml(r.author)}:</span> <span class="comment-text">${r.text}</span></div>`;
                         });
                         commentsHtml += `
                             <div class="comment-box">
-                                <div class="comment-header">${c.author === ADMIN_USER ? 'Aura X' : (db.users[c.author]?.displayName || 'Kullanıcı')}</div>
+                                <div class="comment-header">${userNameHtml(c.author)}</div>
                                 <div class="comment-text">${c.text}</div>
                                 ${repliesHtml}
                                 <div class="comment-input-row">
@@ -967,7 +1101,7 @@
                             <div class="post-user">
                                 <div class="user-avatar-mini">${visibleAuthor.charAt(0).toUpperCase()}</div>
                                 <div class="post-user-info">
-                                    <span class="post-user-name">${visibleAuthor} ${isVerified} ${isLider}</span>
+                                    <span class="post-user-name">${userNameHtml(post.author)} ${isLider}</span>
                                     <span class="post-time">${timeAgo(post.timestamp)}</span>
                                 </div>
                             </div>
@@ -1020,8 +1154,6 @@
             if (!db.banned.includes(username)) db.banned.push(username);
             saveDB();
             await firestore.collection('bannedUsers').doc(username).set({ bannedAt: Date.now(), bannedBy: ADMIN_USER });
-            if (user.ipHash) await firestore.collection('bannedIPs').doc(user.ipHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
-            if (user.deviceHash) await firestore.collection('bannedDevices').doc(user.deviceHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
             const posts = await firestore.collection('posts').where('author', '==', username).get();
             const batch = firestore.batch();
             posts.forEach(doc => batch.delete(doc.ref));
@@ -1161,7 +1293,7 @@
                 const admin = m.author === r.admin ? `<i class="fa-solid fa-crown msg-admin-badge"></i>` : '';
                 const verified = (m.author === ADMIN_USER || db.users[m.author]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
                 const evts = `onmousedown="startPress('${m.id}')" onmouseup="endPress()" onmouseleave="endPress()" ontouchstart="startPress('${m.id}')" ontouchend="endPress()"`;
-                c.innerHTML += `<div class="chat-msg ${me?'me':'others'}"><div class="msg-info">${m.author} ${verified} ${admin}</div><div class="msg-bubble" ${evts}>${m.text || ''}${img}</div></div>`;
+                c.innerHTML += `<div class="chat-msg ${me?'me':'others'}"><div class="msg-info">${userNameHtml(m.author)} ${admin}</div><div class="msg-bubble" ${evts}>${m.text || ''}${img}</div></div>`;
             });
             c.scrollTop = c.scrollHeight;
         }
@@ -1339,10 +1471,8 @@
                 const user = userSnap.exists ? userSnap.data() : {};
                 if (!db.banned.includes(username)) db.banned.push(username);
                 await firestore.collection('bannedUsers').doc(username).set({ bannedAt: Date.now(), bannedBy: ADMIN_USER });
-                if (user.ipHash) await firestore.collection('bannedIPs').doc(user.ipHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
-                if (user.deviceHash) await firestore.collection('bannedDevices').doc(user.deviceHash).set({ username, bannedAt: Date.now(), bannedBy: ADMIN_USER });
                 db.reports.splice(reportIndex, 1); saveDB(); renderAdminPanel();
-                showToast(`${username} hesabı, kayıtlı ağ/cihaz kimliğiyle birlikte kalıcı olarak engellendi!`, 'success');
+                showToast(`${username} hesabı kalıcı olarak engellendi!`, 'success');
             } catch (e) { console.error(e); showToast('Ban işlemi başarısız: ' + (e.code || e.message), 'error'); }
         }
 
