@@ -221,7 +221,7 @@
         .post-menu button.danger { color: var(--danger); }
         
         /* MAVİ TİK İKONU */
-        .verified-badge { color: var(--verified); font-size: 1.05rem; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5)); }
+        .verified-badge { color: var(--verified); font-size: 1.05rem; filter: drop-shadow(0 0 4px rgba(60, 131, 247, 0.6)); }
         
         .lider-badge { background: linear-gradient(45deg, #fbbf24, #d97706); color: black; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 4px; }
         .post-time { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
@@ -496,15 +496,15 @@
                     </div>
                     
                     <div style="background:var(--bg-surface); border:1px solid var(--border); padding:20px; border-radius:16px; margin-bottom:24px;">
-                        <h2 style="margin-bottom:15px; font-size:1.2rem; font-weight:800;"><i class="fa-solid fa-circle-check" style="color:var(--verified);"></i> Mavi Tik Yönetimi</h2>
-                        <input type="text" id="verifiedUsernameInput" class="input-box" placeholder="Mavi tik verilecek kullanıcı adı">
+                        <h2 style="margin-bottom:15px; font-size:1.2rem; font-weight:800;"><i class="fa-solid fa-circle-check" style="color:var(--verified);"></i> DOĞRULANMIŞ ROZETİ </h2>
+                        <input type="text" id="verifiedUsernameInput" class="input-box" placeholder="Kullanıcı Adı">
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="btn" onclick="grantVerified()"><i class="fa-solid fa-circle-check"></i> Mavi Tik Ver</button>
-                            <button class="btn btn-outline" onclick="removeVerified()"><i class="fa-solid fa-circle-xmark"></i> Mavi Tiki Kaldır</button>
+                            <button class="btn" onclick="grantVerified()"><i class="fa-solid fa-circle-check"></i> Doğrulandı</button>
+                            <button class="btn btn-outline" onclick="removeVerified()"><i class="fa-solid fa-circle-xmark"></i> Doğrulanamadı</button>
                         </div>
                     </div>
 
-                    <h2 style="margin-bottom: 15px; font-size: 1.2rem; font-weight: 800;">İnceleme Bekleyen Şikayetler</h2>
+                    <h2 style="margin-bottom: 15px; font-size: 1.2rem; font-weight: 800;">Şikayet Sırası</h2>
                     <div class="report-list" id="adminReportsContainer"></div>
                 </div>
             </section>
