@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sosyal Medya ve Canlı Sohbet Odası</title>
-    <!-- Firebase SDK Kurulumu -->
+    <title>Sosyal Medya ve Canlı Sohbet Odası Platformu</title>
+    <!-- Firebase SDK Entegrasyonu -->
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore-compat.js"></script>
-    <!-- FontAwesome İkonları -->
+    <!-- FontAwesome İkon Kütüphanesi -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #1d9bf0;
             --primary-hover: #1a8cd8;
             --danger: #f4212e;
+            --success: #00ba7c;
             --bg-main: #000000;
             --bg-card: #16181c;
             --bg-hover: #1d1f23;
@@ -21,107 +22,119 @@
             --text-main: #e7e9ea;
             --text-muted: #71767b;
         }
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: var(--bg-main); color: var(--text-main); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-main); color: var(--text-main); line-height: 1.5; }
+        
         .hidden { display: none !important; }
         .show { display: block !important; }
+
+        /* Ana Düzen */
+        .app-layout { max-width: 650px; margin: 0 auto; min-height: 100vh; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
         
-        .app-layout { max-width: 600px; margin: 0 auto; min-height: 100vh; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        header { padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px); }
+        header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.85); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+        header h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+
+        .nav-buttons { display: flex; gap: 8px; }
         
-        .btn { padding: 10px 20px; border: none; border-radius: 9999px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: background 0.2s; }
+        .btn { padding: 10px 20px; border: none; border-radius: 9999px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: background 0.2s, transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-danger { background: var(--danger); color: white; }
         .btn-outline { border: 1px solid var(--border-color); background: transparent; color: var(--text-main); }
         .btn-outline:hover { background: var(--bg-hover); }
 
-        /* Görünümler (Views) */
-        .view-section { padding: 15px; flex: 1; }
+        .view-section { padding: 20px; flex: 1; }
 
-        /* Toast Bildirimleri */
-        #toastContainer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .toast { background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeInOut 3s forwards; }
+        /* Toast Bildirim Sistemi */
+        #toastContainer { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
+        .toast { background: var(--primary); color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
         .toast.error { background: var(--danger); }
-        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
+        .toast.success { background: var(--success); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
 
-        /* Gönderi ve Akış */
-        .post-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        /* Gönderi ve Akış Kartları */
+        .post-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; margin-bottom: 16px; transition: border-color 0.2s; }
+        .post-card:hover { border-color: #383d41; }
         .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .author-name { font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 4px; }
+        .author-name { font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
         .verified-badge { color: var(--primary); font-size: 0.9rem; }
-        .post-content { font-size: 1rem; line-height: 1.5; margin-bottom: 12px; word-break: break-word; }
-        .post-actions { display: flex; gap: 20px; color: var(--text-muted); font-size: 0.9rem; }
-        .post-action-btn { background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .post-content { font-size: 1.05rem; line-height: 1.6; margin-bottom: 14px; word-break: break-word; color: #d6d9dc; }
+        .post-actions { display: flex; gap: 24px; color: var(--text-muted); font-size: 0.9rem; }
+        .post-action-btn { background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: color 0.2s; }
+        .post-action-btn:hover { color: var(--primary); }
         .post-action-btn.liked { color: var(--danger); }
 
         /* Liderlik Podyumu */
-        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding: 20px 0; margin-bottom: 20px; }
-        .podium-item { text-align: center; padding: 15px; background: var(--bg-card); border-radius: 12px; width: 30%; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; }
-        .podium-item.rank-1 { height: 160px; border-color: gold; }
-        .podium-item.rank-2 { height: 130px; border-color: silver; }
-        .podium-item.rank-3 { height: 110px; border-color: #cd7f32; }
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 12px; padding: 25px 0; margin-bottom: 25px; }
+        .podium-item { text-align: center; padding: 18px 12px; background: var(--bg-card); border-radius: 16px; width: 32%; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .podium-item.rank-1 { height: 180px; border-color: #ffd700; background: linear-gradient(to bottom, #16181c, #221f10); }
+        .podium-item.rank-2 { height: 150px; border-color: #c0c0c0; background: linear-gradient(to bottom, #16181c, #1a1e21); }
+        .podium-item.rank-3 { height: 130px; border-color: #cd7f32; background: linear-gradient(to bottom, #16181c, #211c18); }
 
-        /* iOS Action Sheet (Uzun Basma) */
-        #actionSheetOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 99; backdrop-filter: blur(2px); transition: opacity 0.2s; }
-        #actionSheet { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); padding: 20px; border-radius: 20px 20px 0 0; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); border-top: 1px solid var(--border-color); }
+        /* iOS Tarzı Action Sheet (Uzun Basma Menüsü) */
+        #actionSheetOverlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); z-index: 99; backdrop-filter: blur(4px); transition: opacity 0.3s; }
+        #actionSheet { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); padding: 24px 20px; border-radius: 24px 24px 0 0; z-index: 100; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.1, 0.9, 0.2, 1); border-top: 1px solid var(--border-color); }
         #actionSheet.show { transform: translateY(0); }
-        #actionSheet button { display: block; width: 100%; margin-bottom: 10px; padding: 14px; font-size: 1rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-hover); color: white; cursor: pointer; font-weight: 600; text-align: center; }
+        #actionSheet button { display: block; width: 100%; margin-bottom: 12px; padding: 16px; font-size: 1.05rem; border-radius: 14px; border: 1px solid var(--border-color); background: var(--bg-hover); color: white; cursor: pointer; font-weight: 600; text-align: center; transition: background 0.2s; }
         #actionSheet button:hover { background: #26292e; }
 
         /* Yönetim Paneli */
-        .admin-panel-container { background: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; }
-        .report-item { border: 1px solid var(--border-color); background: #111; padding: 15px; margin-bottom: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .admin-panel-container { background: var(--bg-card); border: 1px solid var(--border-color); padding: 24px; border-radius: 16px; }
+        .report-item { border: 1px solid var(--border-color); background: #0f1012; padding: 18px; margin-bottom: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
         
-        /* Oda Sohbet Alanı */
-        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 120px); }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        .chat-message { background: var(--bg-card); padding: 10px 14px; border-radius: 8px; max-width: 80%; border: 1px solid var(--border-color); }
-        .chat-input-area { display: flex; gap: 10px; padding: 10px; border-top: 1px solid var(--border-color); background: var(--bg-card); }
-        .chat-input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: white; font-size: 1rem; }
+        /* Oda Sohbet Ekranı */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 100px); }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .chat-message { background: var(--bg-card); padding: 12px 16px; border-radius: 12px; max-width: 80%; border: 1px solid var(--border-color); user-select: none; }
+        .chat-input-area { display: flex; gap: 12px; padding: 15px; border-top: 1px solid var(--border-color); background: var(--bg-card); }
+        .chat-input-area input { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-main); color: white; font-size: 1rem; outline: none; }
+        .chat-input-area input:focus { border-color: var(--primary); }
     </style>
 </head>
 <body>
 
     <div class="app-layout">
-        <!-- Üst Başlık ve Navigasyon -->
+        <!-- Başlık ve Navigasyon Menüsü -->
         <header>
-            <h2 style="margin:0; font-size:1.2rem;" id="headerTitle">Topluluk Akışı</h2>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-outline" onclick="switchView('feedView')"><i class="fa-solid fa-house"></i></button>
-                <button class="btn btn-outline" onclick="switchView('roomsView')"><i class="fa-solid fa-comments"></i></button>
-                <button class="btn btn-outline" onclick="switchView('leaderboardView')"><i class="fa-solid fa-trophy"></i></button>
-                <button class="btn btn-outline hidden" id="navAdminBtn" onclick="switchView('adminView')"><i class="fa-solid fa-shield-halved"></i></button>
+            <h2 id="headerTitle">Topluluk Akışı</h2>
+            <div class="nav-buttons">
+                <button class="btn btn-outline" onclick="switchView('feedView')" title="Akış"><i class="fa-solid fa-house"></i></button>
+                <button class="btn btn-outline" onclick="switchView('roomsView')" title="Odalar"><i class="fa-solid fa-comments"></i></button>
+                <button class="btn btn-outline" onclick="switchView('leaderboardView')" title="Liderlik"><i class="fa-solid fa-trophy"></i></button>
+                <button class="btn btn-outline hidden" id="navAdminBtn" onclick="switchView('adminView')" title="Yönetim"><i class="fa-solid fa-shield-halved"></i></button>
             </div>
         </header>
 
-        <!-- Akış Görünümü -->
+        <!-- 1. Akış Görünümü -->
         <div id="feedView" class="view-section">
-            <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:15px; margin-bottom:20px;">
-                <textarea id="postContentInput" placeholder="Neler oluyor?" style="width:100%; background:transparent; border:none; color:white; resize:none; font-size:1rem; outline:none; min-height:60px;"></textarea>
-                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:10px; margin-top:5px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; padding:18px; margin-bottom:24px;">
+                <textarea id="postContentInput" placeholder="Neler oluyor?" style="width:100%; background:transparent; border:none; color:white; resize:none; font-size:1.05rem; outline:none; min-height:80px;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:12px; margin-top:8px;">
                     <input type="file" id="postImageInput" accept="image/*" class="hidden">
-                    <button class="btn btn-outline" onclick="document.getElementById('postImageInput').click()"><i class="fa-solid fa-image"></i> Görsel</button>
+                    <button class="btn btn-outline" style="padding: 8px 16px; font-size:0.9rem;" onclick="document.getElementById('postImageInput').click()"><i class="fa-solid fa-image"></i> Medya</button>
                     <button class="btn btn-primary" onclick="createPost()">Gönder</button>
                 </div>
             </div>
             <div id="feedContainer"></div>
         </div>
 
-        <!-- Sohbet Odaları Görünümü -->
+        <!-- 2. Sohbet Odaları Liste Görünümü -->
         <div id="roomsView" class="view-section hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3>Sohbet Odaları</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="font-size:1.2rem;">Sohbet Odaları</h3>
                 <button class="btn btn-primary" onclick="createRoomPrompt()">Oda Kur</button>
             </div>
             <div id="roomsListContainer"></div>
         </div>
 
-        <!-- Aktif Oda Sohbet Ekranı -->
+        <!-- 3. Aktif Oda Sohbet Ekranı -->
         <div id="roomChatView" class="view-section hidden chat-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
-                <h3 id="activeRoomTitle" style="margin:0;">Oda Adı</h3>
-                <button class="btn btn-danger" onclick="leaveActiveRoom()">Odadan Çık</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+                <h3 id="activeRoomTitle" style="font-size:1.1rem; color:var(--primary);">Oda Adı</h3>
+                <button class="btn btn-danger" style="padding: 6px 14px; font-size:0.85rem;" onclick="leaveActiveRoom()">Odadan Çık</button>
             </div>
             <div class="chat-messages" id="chatMessagesContainer"></div>
             <div class="chat-input-area">
@@ -130,40 +143,40 @@
             </div>
         </div>
 
-        <!-- Liderlik Kürsüsü -->
+        <!-- 4. Liderlik Kürsüsü Görünümü -->
         <div id="leaderboardView" class="view-section hidden">
-            <h3>Liderlik Kürsüsü</h3>
+            <h3 style="margin-bottom:15px; font-size:1.2rem;">Liderlik Kürsüsü</h3>
             <div id="podiumContainer" class="podium-container"></div>
-            <div style="text-align:center; margin-top:20px;" id="adminMonthEndWrapper">
+            <div style="text-align:center; margin-top:25px;" id="adminMonthEndWrapper">
                 <button class="btn btn-outline hidden" id="btnMonthEnd" onclick="simulateMonthEnd()">Dönemi Bitir ve Yeni Lider Ata</button>
             </div>
         </div>
 
-        <!-- Yönetim Paneli -->
+        <!-- 5. Sistem Yönetim Paneli Görünümü -->
         <div id="adminView" class="view-section hidden">
-            <h3>Sistem Yönetim Paneli</h3>
+            <h3 style="margin-bottom:15px; font-size:1.2rem;">Sistem Yönetim Paneli</h3>
             <div class="admin-panel-container">
-                <p>Banlanan Kullanıcı Sayısı: <span id="statBanned">0</span> | Bekleyen Şikayet: <span id="statReports">0</span></p>
-                <div style="margin-bottom:20px; display:flex; gap:10px;">
-                    <input type="text" id="verifiedUsernameInput" placeholder="Kullanıcı Adı" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-main); color:white;">
+                <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.95rem;">Banlı Kullanıcılar: <strong id="statBanned" style="color:var(--text-main);">0</strong> | Bekleyen Şikayetler: <strong id="statReports" style="color:var(--text-main);">0</strong></p>
+                <div style="margin-bottom:24px; display:flex; gap:10px;">
+                    <input type="text" id="verifiedUsernameInput" placeholder="Kullanıcı Adı (@sız)" style="flex:1; padding:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--bg-main); color:white; outline:none;">
                     <button class="btn btn-primary" onclick="grantVerified()">Mavi Tik Ver</button>
                     <button class="btn btn-outline" onclick="removeVerified()">Kaldır</button>
                 </div>
-                <h4>Bildirilen İçerikler ve Şikayetler</h4>
+                <h4 style="margin-bottom:12px; font-size:1rem;">Bildirilen Şikayetler</h4>
                 <div id="adminReportsContainer"></div>
             </div>
         </div>
     </div>
 
-    <!-- iOS Action Sheet (Uzun Basma Menüsü) -->
+    <!-- iOS Tarzı Action Sheet (Uzun Basma Menüsü) -->
     <div id="actionSheetOverlay" onclick="closeActionSheet()"></div>
     <div id="actionSheet">
-        <h3 id="actionTargetUser" style="text-align:center; margin-top:0; color:var(--primary);"></h3>
+        <h3 id="actionTargetUser" style="text-align:center; margin-top:0; margin-bottom:16px; color:var(--primary);"></h3>
         <button id="btnToggleMute" onclick="actionMute()">Engelle (Sustur)</button>
         <button onclick="actionDeleteMsg()" style="color:var(--danger);">Mesajı Sil</button>
         <button onclick="actionKick()" style="color:var(--danger);">Odadan At</button>
         <button onclick="actionReport()">Şikayet Et</button>
-        <button onclick="closeActionSheet()" style="background:var(--bg-main); margin-top:10px;">İptal</button>
+        <button onclick="closeActionSheet()" style="background:var(--bg-main); margin-top:8px;">İptal</button>
     </div>
 
     <!-- Toast Bildirim Alanı -->
@@ -171,28 +184,28 @@
 
     <script>
         // ==========================================================================
-        // SİSTEM ALTYAPISI VE VERİ TABANI HAZIRLIĞI
+        // UYGULAMA YAPISI VE STATE YÖNETİMİ
         // ==========================================================================
         const firebaseConfig = { apiKey: "MOCK_KEY", projectId: "mock-social-project" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const firestore = firebase.firestore();
 
         const ADMIN_USER = "A_UR_A_XX";
-        let currentUser = "A_UR_A_XX"; // Test için admin kullanıcısı atanmıştır
+        let currentUser = "A_UR_A_XX"; // Test için ana yönetici yetkisiyle başlatılmıştır
         let activeRoom = null;
         let activeRoomData = null;
 
         let db = {
             users: {
                 "A_UR_A_XX": { votes: 0, verified: true, isLider: false, ipHash: "hash_admin", deviceHash: "dev_admin" },
-                "kullanici1": { votes: 24, verified: true, isLider: false, ipHash: "hash_1", deviceHash: "dev_1" },
-                "kullanici2": { votes: 12, verified: false, isLider: false, ipHash: "hash_2", deviceHash: "dev_2" }
+                "kullanici1": { votes: 42, verified: true, isLider: false, ipHash: "hash_1", deviceHash: "dev_1" },
+                "kullanici2": { votes: 19, verified: false, isLider: false, ipHash: "hash_2", deviceHash: "dev_2" }
             },
             posts: [
-                { id: 1, author: "kullanici1", text: "Herkese harika bir gün diliyorum! Sosyal ağımıza hoş geldiniz.", timestamp: Date.now() - 3600000, likes: ["A_UR_A_XX"], comments: [] }
+                { id: 1, author: "kullanici1", text: "Platformumuzun yeni sürümü hepimize hayırlı olsun!", timestamp: Date.now() - 7200000, likes: ["A_UR_A_XX"], comments: [] }
             ],
             rooms: {
-                "genel_oda": { name: "Genel Sohbet", admin: ADMIN_USER, members: ["A_UR_A_XX", "kullanici1", "kullanici2"], muted: [], messages: [] }
+                "genel_oda": { name: "Genel Topluluk Sohbeti", admin: ADMIN_USER, members: ["A_UR_A_XX", "kullanici1", "kullanici2"], muted: [], messages: [] }
             },
             banned: [],
             reports: []
@@ -211,8 +224,7 @@
         }
 
         function saveDB() {
-            // Veritabanı kayıt simülasyonu
-            console.log("Veritabanı durumu güncellendi:", db);
+            console.log("Veritabanı durumu güncellendi ve kaydedildi.");
         }
 
         function setupAppUI() {
@@ -248,11 +260,11 @@
         }
 
         // ==========================================================================
-        // GÖNDERİ VE AKIŞ YÖNETİMİ
+        // GÖNDERİ VE AKIŞ MOTORU
         // ==========================================================================
         function createPost() {
             const content = document.getElementById('postContentInput').value.trim();
-            if (!content) return showToast("Gönderi içeriği boş olamaz.", "error");
+            if (!content) return showToast("Gönderi içeriği boş bırakılamaz.", "error");
 
             const newPost = {
                 id: Date.now(),
@@ -266,7 +278,7 @@
             db.posts.unshift(newPost);
             document.getElementById('postContentInput').value = '';
             renderFeed();
-            showToast("Gönderiniz başarıyla paylaşıldı.");
+            showToast("Gönderiniz başarıyla paylaşıldı.", "success");
         }
 
         function renderFeed() {
@@ -274,7 +286,7 @@
             container.innerHTML = '';
 
             if (db.posts.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Henüz paylaşılan bir gönderi yok.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:30px;">Henüz paylaşılan bir gönderi bulunmuyor.</p>';
                 return;
             }
 
@@ -315,7 +327,7 @@
         function deletePost(postId) {
             db.posts = db.posts.filter(p => p.id !== postId);
             renderFeed();
-            showToast("Gönderi silindi.");
+            showToast("Gönderi kaldırıldı.");
         }
 
         // ==========================================================================
@@ -336,8 +348,8 @@
                 container.innerHTML += `
                     <div class="post-card" style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <h4 style="margin:0 0 5px 0;">${r.name}</h4>
-                            <span style="font-size:0.8rem; color:var(--text-muted);">Yönetici: @${r.admin} | Üye: ${r.members.length}</span>
+                            <h4 style="margin:0 0 4px 0; font-size:1.05rem;">${escapeHTML(r.name)}</h4>
+                            <span style="font-size:0.8rem; color:var(--text-muted);">Yönetici: @${r.admin} | Üye Sayısı: ${r.members.length}</span>
                         </div>
                         <button class="btn btn-primary" onclick="joinRoom('${roomId}')">Odaya Gir</button>
                     </div>
@@ -347,17 +359,17 @@
 
         function createRoomPrompt() {
             const roomName = prompt("Oda adını giriniz:");
-            if (!roomName) return;
+            if (!roomName || !roomName.trim()) return;
             const roomId = "room_" + Date.now();
             db.rooms[roomId] = {
-                name: roomName,
+                name: roomName.trim(),
                 admin: currentUser,
                 members: [currentUser],
                 muted: [],
                 messages: []
             };
             renderRoomsList();
-            showToast("Oda başarıyla kuruldu.");
+            showToast("Sohbet odası başarıyla kuruldu.", "success");
         }
 
         function joinRoom(roomId) {
@@ -383,7 +395,7 @@
             if (!text || !activeRoomData) return;
 
             if (activeRoomData.muted && activeRoomData.muted.includes(currentUser)) {
-                return showToast("Bu odada susturuldunuz, mesaj yazamazsınız.", "error");
+                return showToast("Bu odada susturuldunuz, mesaj gönderemezsiniz.", "error");
             }
 
             const msg = {
@@ -406,8 +418,8 @@
             activeRoomData.messages.forEach(msg => {
                 container.innerHTML += `
                     <div class="chat-message" onmousedown="startPress(${msg.id})" onmouseup="endPress()" ontouchstart="startPress(${msg.id})" ontouchend="endPress()">
-                        <div style="font-size:0.75rem; color:var(--primary); margin-bottom:2px;">@${msg.author}</div>
-                        <div>${escapeHTML(msg.text)}</div>
+                        <div style="font-size:0.75rem; color:var(--primary); margin-bottom:4px; font-weight:600;">@${msg.author}</div>
+                        <div style="font-size:0.95rem; word-break:break-word;">${escapeHTML(msg.text)}</div>
                     </div>
                 `;
             });
@@ -415,7 +427,7 @@
         }
 
         // ==========================================================================
-        // IOS ACTION SHEET (UZUN BASMA İŞLEMLERİ)
+        // IOS TARZI ACTION SHEET (UZUN BASMA MODERASYON İŞLEMLERİ)
         // ==========================================================================
         function startPress(msgId) {
             if (!activeRoomData) return;
@@ -475,7 +487,7 @@
             activeRoomData.messages = activeRoomData.messages.filter(x => x.id !== targetActionMsg.id);
             closeActionSheet();
             renderChatMessages();
-            showToast("Mesaj silindi.");
+            showToast("Mesaj odadan silindi.");
         }
 
         function actionKick() {
@@ -496,7 +508,7 @@
             });
             saveDB();
             closeActionSheet();
-            showToast("Bildirim ana yöneticiye iletildi.");
+            showToast("Bildirim ana yöneticiye iletildi.", "success");
             renderAdminPanel();
         }
 
@@ -514,7 +526,7 @@
                 .slice(0, 3);
 
             if (sorted.length === 0) {
-                container.innerHTML = "<p style='color:var(--text-muted);'>Henüz oy alan kullanıcı bulunmuyor.</p>";
+                container.innerHTML = "<p style='color:var(--text-muted); text-align:center;'>Henüz oy alan kullanıcı bulunmuyor.</p>";
                 return;
             }
 
@@ -529,8 +541,8 @@
             const isVerified = db.users[user.username]?.verified || user.username === ADMIN_USER;
             return `
                 <div class="podium-item rank-${rank}">
-                    <div style="font-weight:bold; color:var(--primary); margin-bottom:4px;">#${rank}</div>
-                    <div style="font-size:0.9rem; font-weight:600;">@${user.username} ${isVerified ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : ''}</div>
+                    <div style="font-weight:bold; color:var(--primary); margin-bottom:6px; font-size:1.1rem;">#${rank}</div>
+                    <div style="font-size:0.9rem; font-weight:700; word-break:break-all;">@${user.username} ${isVerified ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : ''}</div>
                     <div style="color:var(--text-muted); font-size:0.85rem; margin-top:auto;">${user.votes} Oy</div>
                 </div>
             `;
@@ -563,7 +575,7 @@
         }
 
         // ==========================================================================
-        // YÖNETİM PANELİ VE MODERASYON
+        // SİSTEM YÖNETİM PANELİ VE MODERASYON
         // ==========================================================================
         function renderAdminPanel() {
             if (currentUser !== ADMIN_USER) return;
@@ -575,7 +587,7 @@
             container.innerHTML = '';
             
             if (db.reports.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:10px;">Bekleyen şikayet bulunmuyor.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:15px;">Bekleyen şikayet bulunmuyor.</p>';
                 return;
             }
 
@@ -583,14 +595,14 @@
                 container.innerHTML += `
                     <div class="report-item">
                         <div>
-                            <div style="font-size:0.75rem; color:var(--primary); margin-bottom:2px;">Oda: ${r.roomName}</div>
-                            <div><strong style="color:var(--danger);">Şikayet Edilen:</strong> @${r.reportedUser}</div>
-                            <div style="color:var(--text-muted); font-size:0.8rem; margin:2px 0;">Bildiren: @${r.reporter}</div>
-                            <div style="background:rgba(0,0,0,0.5); padding:6px; border-radius:4px; font-size:0.85rem; margin-top:4px;">"${escapeHTML(r.text)}"</div>
+                            <div style="font-size:0.75rem; color:var(--primary); margin-bottom:4px; font-weight:600;">Oda: ${escapeHTML(r.roomName)}</div>
+                            <div><strong style="color:var(--danger);">Şikayet Edilen:</strong> @${escapeHTML(r.reportedUser)}</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem; margin:2px 0;">Bildiren: @${escapeHTML(r.reporter)}</div>
+                            <div style="background:rgba(0,0,0,0.6); padding:8px; border-radius:6px; font-size:0.85rem; margin-top:6px; border-left:3px solid var(--primary);">"${escapeHTML(r.text)}"</div>
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <button class="btn btn-danger" style="padding:6px 12px; font-size:0.85rem;" onclick="banUserFromSystem('${r.reportedUser}', ${i})"><i class="fa-solid fa-ban"></i> Banla</button>
-                            <button class="btn btn-outline" style="padding:6px 12px; font-size:0.85rem;" onclick="ignoreReport(${i})">Yoksay</button>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button class="btn btn-danger" style="padding:8px 14px; font-size:0.85rem;" onclick="banUserFromSystem('${r.reportedUser}', ${i})"><i class="fa-solid fa-ban"></i> Banla</button>
+                            <button class="btn btn-outline" style="padding:8px 14px; font-size:0.85rem;" onclick="ignoreReport(${i})">Yoksay</button>
                         </div>
                     </div>
                 `;
@@ -609,7 +621,7 @@
         function grantVerified() {
             if (currentUser !== ADMIN_USER) return;
             const username = document.getElementById('verifiedUsernameInput').value.trim();
-            if (!username) return showToast("Kullanıcı adı giriniz.", "error");
+            if (!username) return showToast("Lütfen bir kullanıcı adı giriniz.", "error");
             
             if (!db.users[username]) {
                 db.users[username] = { votes: 0, verified: true };
@@ -625,7 +637,7 @@
         function removeVerified() {
             if (currentUser !== ADMIN_USER) return;
             const username = document.getElementById('verifiedUsernameInput').value.trim();
-            if (!username) return showToast("Kullanıcı adı giriniz.", "error");
+            if (!username) return showToast("Lütfen bir kullanıcı adı giriniz.", "error");
             
             if (db.users[username]) {
                 db.users[username].verified = false;
@@ -644,7 +656,7 @@
         }
 
         // ==========================================================================
-        // YARDIMCI FONKSİYONLAR
+        // YARDIMCI FORMAT FONKSİYONLARI
         // ==========================================================================
         function timeAgo(timestamp) {
             const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -657,12 +669,13 @@
         }
 
         function escapeHTML(str) {
+            if (!str) return '';
             return str.replace(/[&<>'"]/g, 
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
 
-        // Uygulama Başlatma
+        // Uygulamanın Başlatılması
         window.onload = () => {
             setupAppUI();
         };
