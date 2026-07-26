@@ -351,13 +351,6 @@
         .google-btn:hover { background:#f4f4f4; }
         #regionField { display:none; }
         #googleStatus { display:none; font-size:.85rem; color:var(--text-muted); margin-bottom:10px; text-align:center; }
-        #kvkkModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.82); align-items:center; justify-content:center; padding:18px; }
-        #kvkkModal.show { display:flex; }
-        .kvkk-box { width:min(720px,100%); max-height:88vh; overflow:auto; background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
-        .kvkk-box h2 { margin-top:0; }
-        .kvkk-text { max-height:45vh; overflow:auto; padding:16px; background:rgba(0,0,0,.18); border-radius:12px; line-height:1.65; color:var(--text-muted); }
-        .kvkk-check { display:flex; gap:10px; align-items:flex-start; margin:16px 0; cursor:pointer; }
-        .kvkk-actions { display:flex; gap:10px; justify-content:flex-end; }
 </style>
 </head>
 <body>
@@ -801,7 +794,6 @@
             if (!u || !p) return showToast('Kullanıcı adı ve şifre gereklidir.', 'error');
             if (!isLoginMode && (!firstName || !lastName)) return showToast('Ad ve soyad gereklidir.', 'error');
             if (!isLoginMode && !region) return showToast('Kayıt olmak için bölgenizi seçin.', 'error');
-            if (!isLoginMode && !kvkkAcceptedForRegistration) return showToast('Önce zorunlu KVKK ve Gizlilik Bilgilendirmesini tamamlayın.', 'error');
             if (db.banned.includes(u)) return showToast('Bu kullanıcı adı yasaklanmıştır.', 'error');
             try {
                 currentNetwork = await getNetworkIdentity();
