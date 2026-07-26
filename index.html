@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aura Ultra X | Sosyal Medya</title>
+    <title>Aura Ultra X | VIP Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
@@ -115,6 +115,7 @@
             background: radial-gradient(circle at top left, #1e0c38 0%, var(--bg-base) 60%);
             z-index: 10000;
             display: flex; justify-content: center; align-items: center; padding: 20px;
+            overflow-y: auto;
         }
         .auth-card {
             background: var(--bg-surface);
@@ -126,12 +127,50 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+            margin: auto;
         }
         .auth-logo { font-size: 2.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .auth-logo i { color: var(--primary); text-shadow: var(--shadow-neon); }
         .auth-switch { margin-top: 1.5rem; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
         .auth-switch span { color: var(--primary); font-weight: 700; }
         .auth-switch:hover { color: var(--text-main); }
+
+        /* KVKK - SABİT METİN (BUTONUN ÜSTÜNDE) */
+        .kvkk-inline-box {
+            display: none;
+            text-align: left;
+            background: rgba(139, 92, 246, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 16px 14px 16px;
+            margin-bottom: 16px;
+        }
+        .kvkk-inline-box h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .kvkk-inline-box h3 i { color: var(--primary); }
+        .kvkk-inline-scroll {
+            max-height: 160px;
+            overflow-y: auto;
+            font-size: 0.82rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+            padding-right: 4px;
+        }
+        .kvkk-inline-scroll p { margin-bottom: 8px; }
+        .kvkk-inline-warning {
+            margin-top: 10px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--danger);
+            text-align: center;
+            line-height: 1.4;
+        }
 
         /* ==========================================================================
            APP LAYOUT & SIDEBAR
@@ -208,10 +247,13 @@
 
         .post-card { padding: 1.5rem; border-bottom: 1px solid var(--border); transition: var(--transition); }
         .post-card:hover { background: rgba(255,255,255,0.015); }
+        .post-card.pinned-admin { background: rgba(139, 92, 246, 0.06); border-left: 3px solid var(--primary); }
+        .pinned-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
         .post-user { display: flex; align-items: center; gap: 12px; }
         .post-user-info { display: flex; flex-direction: column; }
         .post-user-name { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
+        .post-user-handle { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
         .post-menu-wrap { position: relative; }
         .post-menu-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 6px 10px; }
         .post-menu { display: none; position: absolute; right: 0; top: 34px; z-index: 30; min-width: 180px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,.45); }
@@ -243,6 +285,7 @@
         .comment-box { margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .comment-box:last-child { border-bottom: none; margin-bottom: 0; }
         .comment-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .comment-handle { font-weight: 500; color: var(--text-muted); font-size: 0.82rem; }
         .comment-text { font-size: 0.95rem; color: #e4e4e7; }
         .reply-container { margin-left: 18px; margin-top: 8px; border-left: 2px solid var(--border); padding-left: 12px; }
         .comment-input-row { display: flex; gap: 10px; margin-top: 10px; }
@@ -358,16 +401,6 @@
     <!-- TOAST NOTIFICATION ALANI -->
     <div id="toastContainer"></div>
 
-    <!-- ZORUNLU KVKK BİLGİLENDİRME EKRANI -->
-            <h2 id="kvkkTitle">KVKK ve Gizlilik Bilgilendirmesi</h2>
-            <div class="kvkk-text">
-                <p><strong>Aura Ultra X</strong> hesabınızı oluştururken verdiğiniz bilgiler, hesabınızı oluşturmak ve platformun güvenliğini sağlamak amacıyla işlenebilir.</p>
-                <p>Güvenlik ve kötüye kullanımı önleme amacıyla ağ/IP ve cihaz bilgileri, mümkün olan ölçüde hashlenmiş veya teknik güvenlik kimliği olarak işlenebilir. Bu bilgiler kullanıcılar arasında herkese açık şekilde gösterilmez.</p>
-                <p>Google hesabı ile kayıt sırasında Google tarafından sağlanan hesap kimliği, hesabınızı eşleştirmek amacıyla kullanılabilir. Gereksiz kişisel veriler mümkün olduğunca toplanmamalıdır.</p>
-                <p>Veriler yalnızca belirli ve meşru amaçlarla, amaçla bağlantılı ve ölçülü şekilde işlenmeli; gerekli olmayan veriler gereksiz yere saklanmamalıdır.</p>
-                <p>Verilerinizle ilgili bilgi almak veya haklarınızı kullanmak için uygulama yöneticisiyle iletişime geçebilirsiniz. Bu ekran bir bilgilendirme metnidir; gerçek kullanıma açmadan önce bir ebeveyn/veli ve gerektiğinde hukuk uzmanı tarafından gözden geçirilmelidir.</p>
-            </div>
-
     <!-- AUTH OVERLAY -->
     <div id="authOverlay">
         <div class="auth-card">
@@ -381,6 +414,20 @@
                 <option>Türkiye</option><option>Avrupa</option><option>Asya</option><option>Kuzey Amerika</option>
                 <option>Güney Amerika</option><option>Afrika</option><option>Okyanusya</option><option>Orta Doğu</option>
             </select>
+
+            <!-- KVKK METNİ: SABİT ŞEKİLDE KAYIT OL BUTONUNUN ÜSTÜNDE -->
+            <div id="kvkkInlineBox" class="kvkk-inline-box">
+                <h3><i class="fa-solid fa-shield-halved"></i> KVKK ve Gizlilik Bilgilendirmesi</h3>
+                <div class="kvkk-inline-scroll">
+                    <p><strong>Aura Ultra X</strong> hesabınızı oluştururken verdiğiniz bilgiler, hesabınızı oluşturmak ve platformun güvenliğini sağlamak amacıyla işlenebilir.</p>
+                    <p>Güvenlik ve kötüye kullanımı önleme amacıyla ağ/IP ve cihaz bilgileri, mümkün olan ölçüde hashlenmiş veya teknik güvenlik kimliği olarak işlenebilir. Bu bilgiler kullanıcılar arasında herkese açık şekilde gösterilmez.</p>
+                    <p>Google hesabı ile kayıt sırasında Google tarafından sağlanan hesap kimliği, hesabınızı eşleştirmek amacıyla kullanılabilir. Gereksiz kişisel veriler mümkün olduğunca toplanmamalıdır.</p>
+                    <p>Veriler yalnızca belirli ve meşru amaçlarla, amaçla bağlantılı ve ölçülü şekilde işlenmeli; gerekli olmayan veriler gereksiz yere saklanmamalıdır.</p>
+                    <p>Verilerinizle ilgili bilgi almak veya haklarınızı kullanmak için uygulama yöneticisiyle iletişime geçebilirsiniz.</p>
+                </div>
+                <div class="kvkk-inline-warning">Metni Onaylamıyorsanız Lütfen İşleme Devam Etmeyiniz.</div>
+            </div>
+
             <div id="googleStatus"></div>
             <button class="btn google-btn" id="googleBtn" onclick="googleRegister()" style="display:none;"><i class="fa-brands fa-google"></i> Google ile Kayıt Ol</button>
             <button class="btn" style="width: 100%; font-size: 1.05rem; padding: 14px;" id="authBtn" onclick="handleAuth()">Giriş Yap</button>
@@ -568,8 +615,6 @@
 
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         let pendingGoogleUser = null;
-        let kvkkAcceptedForRegistration = false;
-        let currentNetwork = { ip: null, ipHash: null, deviceHash: null };
         async function sha256(value) { const data = new TextEncoder().encode(value || ''); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join(''); }
         async function getNetworkIdentity() {
             try {
@@ -593,8 +638,8 @@
             document.getElementById('regionField').style.display = register ? 'block' : 'none';
             document.getElementById('authFirstName').style.display = register ? 'block' : 'none';
             document.getElementById('authLastName').style.display = register ? 'block' : 'none';
-            document.getElementById('kvkkOpenLabel').style.display = register ? 'flex' : 'none';
-            document.getElementById('kvkkOpenCheck').checked = !!kvkkAcceptedForRegistration;
+            // KVKK metni artık her zaman kayıt modunda, buton üstünde sabit gösterilir.
+            document.getElementById('kvkkInlineBox').style.display = register ? 'block' : 'none';
             document.getElementById('authBtn').innerText = register ? 'Kayıt Ol' : 'Giriş Yap';
             document.getElementById('googleStatus').style.display = pendingGoogleUser ? 'block' : 'none';
             if (pendingGoogleUser) document.getElementById('googleStatus').innerText = `Google hesabı seçildi: ${pendingGoogleUser.email || 'hesap'}`;
@@ -603,52 +648,12 @@
             try {
                 const result = await firebase.auth().signInWithPopup(googleProvider);
                 pendingGoogleUser = result.user;
-                kvkkAcceptedForRegistration = false;
-                document.getElementById('kvkkReadCheck').checked = false;
                 updateAuthForm();
-                document.getElementById('kvkkModal').classList.add('show');
+                showToast('Google hesabı seçildi. Devam etmek için Kayıt Ol butonuna basın.', 'success');
             } catch (e) { console.error(e); showToast('Google ile kayıt başarısız: ' + (e.code || e.message), 'error'); }
         }
 
         let deferredInstallPrompt = null;
-        function openKvkkFromCheckbox(box) {
-            if (box.checked) {
-                box.checked = false;
-                document.getElementById('kvkkModal').classList.add('show');
-                const text = document.querySelector('.kvkk-text');
-                const check = document.getElementById('kvkkReadCheck');
-                const btn = document.querySelector('#kvkkModal .kvkk-actions .btn:not(.btn-outline)');
-                check.checked = false;
-                btn.disabled = true;
-                btn.style.opacity = '0.45';
-                text.scrollTop = 0;
-                text.onscroll = () => {
-                    const atBottom = text.scrollTop + text.clientHeight >= text.scrollHeight - 8;
-                    if (atBottom) { btn.disabled = false; btn.style.opacity = '1'; }
-                };
-            }
-        }
-        function acceptKvkk() {
-            const text = document.querySelector('.kvkk-text');
-            const atBottom = text.scrollTop + text.clientHeight >= text.scrollHeight - 8;
-            if (!atBottom) return showToast('Önce KVKK metninin tamamını okuyun.', 'error');
-            if (!document.getElementById('kvkkReadCheck').checked) {
-                showToast('Devam etmek için “Okudum, ONAYLIYORUM” kutusunu işaretleyin.', 'error');
-                return;
-            }
-            kvkkAcceptedForRegistration = true;
-            document.getElementById('kvkkOpenCheck').checked = true;
-            document.getElementById('kvkkModal').classList.remove('show');
-            showToast('KVKK onayınız kaydedilecek.', 'success');
-        }
-        function rejectKvkk() {
-            kvkkAcceptedForRegistration = false;
-            pendingGoogleUser = null;
-            document.getElementById('kvkkOpenCheck').checked = false;
-            document.getElementById('kvkkModal').classList.remove('show');
-            updateAuthForm();
-            showToast('Bilgilendirme kabul edilmedi. Kayıt işlemi iptal edildi.', 'error');
-        }
         window.addEventListener('beforeinstallprompt', e => {
             e.preventDefault();
             deferredInstallPrompt = e;
@@ -778,8 +783,10 @@
             } else if (db.banned.includes(currentUser)) { alert('Bu hesap kalıcı olarak engellenmiştir.'); localStorage.removeItem('aurax_active_user'); }
         };
 
+        let currentNetwork = { ip: null, ipHash: null, deviceHash: null };
+
         function toggleAuthMode() {
-            isLoginMode = !isLoginMode; pendingGoogleUser = null; kvkkAcceptedForRegistration = false;
+            isLoginMode = !isLoginMode; pendingGoogleUser = null;
             document.getElementById('authSwitchText').innerHTML = isLoginMode ? 'Hesabın yok mu? <span>Kayıt Ol</span>' : 'Zaten hesabın var mı? <span>Giriş Yap</span>';
             updateAuthForm();
         }
@@ -803,9 +810,8 @@
                     if (snap.exists && snap.data().password === p) { await ref.update({ lastIpHash: currentNetwork.ipHash || null, lastDeviceHash: currentNetwork.deviceHash || null, lastSeenAt: Date.now() }); loginSuccess(u); }
                     else showToast('Hatalı kullanıcı adı veya şifre.', 'error');
                 } else {
-                    if (!pendingGoogleUser) return showToast('Önce Google ile Kayıt Ol butonuna basıp hesabını seç.', 'error');
                     if (snap.exists) return showToast('Bu kullanıcı adı önceden alınmış.', 'error');
-                    await ref.set({ password: p, firstName, lastName, displayName: `${firstName} ${lastName}`, votes: 0, isLider: false, region, kvkkAccepted: true, kvkkAcceptedAt: Date.now(), kvkkVersion: '1.0', googleUid: pendingGoogleUser.uid, googleEmail: pendingGoogleUser.email || null, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
+                    await ref.set({ password: p, firstName, lastName, displayName: `${firstName} ${lastName}`, votes: 0, isLider: false, region, googleUid: pendingGoogleUser ? pendingGoogleUser.uid : null, googleEmail: pendingGoogleUser ? (pendingGoogleUser.email || null) : null, ipHash: currentNetwork.ipHash || null, deviceHash: currentNetwork.deviceHash || null, createdAt: Date.now() });
                     loginSuccess(u);
                 }
             } catch (e) { console.error(e); showToast('Kayıt/giriş hatası: ' + (e.code || e.message), 'error'); }
@@ -904,9 +910,9 @@
             else publish(null).catch(e => { console.error(e); showToast('Gönderi yayınlanamadı.', 'error'); });
         }
 
-        async function toggleLike(index) {
+        async function toggleLike(postId) {
             await firebaseReady;
-            const post = db.posts[index];
+            const post = db.posts.find(p => p.id === postId);
             if (!post) return;
             const likedBy = Array.isArray(post.likedBy) ? [...post.likedBy] : [];
             const i = likedBy.indexOf(currentUser);
@@ -959,15 +965,28 @@
         function loadFeed() {
             const feed = document.getElementById('feedContainer');
             feed.innerHTML = '';
-            
-            db.posts.forEach((post, pIndex) => {
+
+            // ADMIN GÖNDERİLERİ HER ZAMAN EN ÜSTTE SABİT KALIR.
+            // Diğer gönderiler kendi aralarında tarih sırasına (en yeni üstte) göre listelenir.
+            const adminPosts = db.posts.filter(p => p.author === ADMIN_USER);
+            const otherPosts = db.posts.filter(p => p.author !== ADMIN_USER);
+            const orderedPosts = [...adminPosts, ...otherPosts];
+
+            orderedPosts.forEach((post) => {
+                const pIndex = db.posts.indexOf(post); // orijinal db.posts referansı (toggleLike/addComment için)
                 const uData = db.users[post.author];
                 const visibleAuthor = post.author === ADMIN_USER ? 'Aura X' : (uData?.displayName || 'Kullanıcı');
-                
+                const isAdminPost = post.author === ADMIN_USER;
+
                 // MAVİ TİK: A_UR_A_XX kullanıcısına özel zorunlu ikon
                 const isVerified = (post.author === ADMIN_USER || uData?.verified) ? `<i class="fa-solid fa-circle-check verified-badge" title="Onaylı Hesap"></i>` : '';
                 const isLider = uData && uData.isLider && post.author !== ADMIN_USER ? `<span class="lider-badge">LİDER 1</span>` : '';
-                
+
+                // ADMIN DIŞINDA HERKESİN ADININ ALTINDA KULLANICI ADI (@handle) GÖSTERİLİR
+                const handleHtml = !isAdminPost ? `<span class="post-user-handle">@${post.author}</span>` : '';
+
+                const pinnedTag = isAdminPost ? `<div class="pinned-tag"><i class="fa-solid fa-thumbtack"></i> Sabitlenmiş - Yönetici Duyurusu</div>` : '';
+
                 const imgHtml = post.image ? `<div class="post-img-container"><img src="${post.image}" class="post-img"></div>` : '';
                 
                 // BEĞENİ HESAPLAMA (Birden fazla beğeni atılamaz)
@@ -981,11 +1000,17 @@
                     post.comments.forEach((c, cIndex) => {
                         let repliesHtml = '';
                         if (c.replies) c.replies.forEach(r => {
-                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">${r.author === ADMIN_USER ? 'Aura X' : (db.users[r.author]?.displayName || 'Kullanıcı')}:</span> <span class="comment-text">${r.text}</span></div>`;
+                            const rIsAdmin = r.author === ADMIN_USER;
+                            const rName = rIsAdmin ? 'Aura X' : (db.users[r.author]?.displayName || 'Kullanıcı');
+                            const rHandle = !rIsAdmin ? ` <span class="comment-handle">@${r.author}</span>` : '';
+                            repliesHtml += `<div class="reply-container"><span style="font-weight:700;">${rName}</span>${rHandle}: <span class="comment-text">${r.text}</span></div>`;
                         });
+                        const cIsAdmin = c.author === ADMIN_USER;
+                        const cName = cIsAdmin ? 'Aura X' : (db.users[c.author]?.displayName || 'Kullanıcı');
+                        const cHandle = !cIsAdmin ? ` <span class="comment-handle">@${c.author}</span>` : '';
                         commentsHtml += `
                             <div class="comment-box">
-                                <div class="comment-header">${c.author === ADMIN_USER ? 'Aura X' : (db.users[c.author]?.displayName || 'Kullanıcı')}</div>
+                                <div class="comment-header">${cName}${cHandle}</div>
                                 <div class="comment-text">${c.text}</div>
                                 ${repliesHtml}
                                 <div class="comment-input-row">
@@ -997,12 +1022,14 @@
                 }
 
                 feed.innerHTML += `
-                    <div class="post-card">
+                    <div class="post-card ${isAdminPost ? 'pinned-admin' : ''}">
+                        ${pinnedTag}
                         <div class="post-header">
                             <div class="post-user">
                                 <div class="user-avatar-mini">${visibleAuthor.charAt(0).toUpperCase()}</div>
                                 <div class="post-user-info">
                                     <span class="post-user-name">${visibleAuthor} ${isVerified} ${isLider}</span>
+                                    ${handleHtml}
                                     <span class="post-time">${timeAgo(post.timestamp)}</span>
                                 </div>
                             </div>
@@ -1015,7 +1042,7 @@
                         ${imgHtml}
                         
                         <div class="post-actions">
-                            <div class="action-item ${likeClass}" onclick="toggleLike(${pIndex})">
+                            <div class="action-item ${likeClass}" onclick="toggleLike('${post.id}')">
                                 <i class="fa-${hasLiked ? 'solid' : 'regular'} fa-heart"></i> ${likeCount}
                             </div>
                             <div class="action-item" onclick="toggleComments(${pIndex})">
