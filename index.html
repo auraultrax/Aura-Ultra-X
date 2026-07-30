@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aura Ultra X | VIP Edition</title>
+    <title>Aura Ultra X | Sosyal Medya</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
@@ -369,7 +369,7 @@
     <!-- AUTH OVERLAY -->
     <div id="authOverlay">
         <div class="auth-card">
-            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra</div>
+            <div class="auth-logo"><i class="fa-solid fa-bolt-lightning"></i> Aura Ultra X</div>
             <input type="text" id="authFirstName" class="input-box" placeholder="Ad" autocomplete="given-name" style="display:none;">
             <input type="text" id="authLastName" class="input-box" placeholder="Soyad" autocomplete="family-name" style="display:none;">
             <input type="text" id="authUsername" class="input-box" placeholder="Kullanıcı Adı" autocomplete="off">
@@ -944,7 +944,13 @@
             const feed = document.getElementById('feedContainer');
             feed.innerHTML = '';
             
-            db.posts.forEach((post, pIndex) => {
+            // A_UR_A_XX (sistem yöneticisi) gönderileri her zaman akışın en üstünde sabit kalır.
+            // Orijinal db.posts index'i korunuyor ki beğeni/yorum/yanıt fonksiyonları doğru gönderiyi bulsun.
+            const orderedPosts = db.posts
+                .map((post, pIndex) => ({ post, pIndex }))
+                .sort((a, b) => (b.post.author === ADMIN_USER ? 1 : 0) - (a.post.author === ADMIN_USER ? 1 : 0));
+
+            orderedPosts.forEach(({ post, pIndex }) => {
                 const uData = db.users[post.author];
                 const visibleAuthor = post.author === ADMIN_USER ? 'Aura X' : (uData?.displayName || 'Kullanıcı');
                 
@@ -1295,29 +1301,57 @@
             `;
         }
 
-        function simulateMonthEnd() {
+        async function simulateMonthEnd() {
             // Sıkı Yetki Kontrolü
             if (currentUser !== ADMIN_USER) {
                 showToast("Bu işlemi yapma yetkiniz yoktur!", "error");
                 return;
             }
-            
+
             let highest = { u: null, v: -1 };
             for (let k in db.users) {
                 if (k === ADMIN_USER) continue;
-                db.users[k].isLider = false;
-                if (db.users[k].votes > highest.v) { highest.v = db.users[k].votes; highest.u = k; }
+                const v = db.users[k].votes || 0;
+                if (v > highest.v) { highest.v = v; highest.u = k; }
             }
-            
-            if (highest.u && highest.v > 0) {
-                db.users[highest.u].isLider = true;
+            const newLeader = (highest.u && highest.v > 0) ? highest.u : null;
+
+            try {
+                // Oyları ve lider bilgisini Firestore'a KALICI olarak yaz.
+                // Önceden sadece yerel hafızada (db.users) sıfırlanıyordu, bu yüzden sayfa
+                // yenilendiğinde veya canlı dinleyici tekrar veri çektiğinde eski oylar geri geliyordu.
+                const usersBatch = firestore.batch();
+                for (let k in db.users) {
+                    if (k === ADMIN_USER) continue;
+                    usersBatch.update(firestore.collection('users').doc(k), { votes: 0, isLider: k === newLeader });
+                }
+                await usersBatch.commit();
+
+                // Oy kayıtlarını temizle ki herkes yeni ay için tekrar oy kullanabilsin.
+                // Ay bitmeden yapılan tekrar oylar zaten voteUser() içindeki ALREADY_VOTED
+                // kontrolüyle geçersiz sayılıyor; bu temizlik yalnızca yeni ayı başlatır.
+                const votesSnap = await firestore.collection('votes').get();
+                const voteDocs = votesSnap.docs;
+                for (let i = 0; i < voteDocs.length; i += 450) {
+                    const delBatch = firestore.batch();
+                    voteDocs.slice(i, i + 450).forEach(d => delBatch.delete(d.ref));
+                    await delBatch.commit();
+                }
+
+                // Anlık arayüz güncellemesi (Firestore dinleyicisi de az sonra aynı veriyle senkronize eder)
+                for (let k in db.users) {
+                    if (k === ADMIN_USER) continue;
+                    db.users[k].votes = 0;
+                    db.users[k].isLider = (k === newLeader);
+                }
+                renderLeaderboard();
+                loadFeed();
+
+                showToast(newLeader ? `Liderlik dönemi sıfırlandı! Yeni lider: @${newLeader}` : "Liderlik dönemi sıfırlandı. Bu ay için lider seçilmedi.", "success");
+            } catch (e) {
+                console.error(e);
+                showToast('Ay bitirme işlemi başarısız: ' + (e.code || e.message), 'error');
             }
-            
-            for (let k in db.users) {
-                if (k !== ADMIN_USER) db.users[k].votes = 0;
-            }
-            saveDB(); renderLeaderboard(); loadFeed();
-            showToast("Liderlik dönemi başarıyla sıfırlandı ve yeni lider atandı!", "success");
         }
 
         /* ==========================================================================
