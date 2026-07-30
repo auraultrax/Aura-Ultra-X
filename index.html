@@ -548,6 +548,7 @@
         <a class="mobile-nav-item" onclick="switchView('odalar')"><i class="fa-solid fa-comments"></i></a>
         <a class="mobile-nav-item" onclick="switchView('liderlik')"><i class="fa-solid fa-trophy"></i></a>
         <a class="mobile-nav-item" id="mobileNavAdmin" style="display:none; color: var(--danger);" onclick="switchView('yonetim')"><i class="fa-solid fa-shield-halved"></i></a>
+        <a class="mobile-nav-item" id="installAppBtnMobile" style="display:none;" onclick="installAuraApp()"><i class="fa-solid fa-download"></i></a>
         <a class="mobile-nav-item" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></a>
     </div>
 
@@ -646,16 +647,18 @@
 
         function initInstallButton() {
             const btn = document.getElementById('installAppBtn');
-            if (!btn) return;
+            const mobileBtn = document.getElementById('installAppBtnMobile');
             if (isRunningStandalone()) {
-                btn.style.display = 'none';
+                if (btn) btn.style.display = 'none';
+                if (mobileBtn) mobileBtn.style.display = 'none';
                 return;
             }
             // Show the button by default for every platform; beforeinstallprompt
             // (Chrome/Edge/Android/Samsung Internet) will still hijack the click
             // with the native prompt when it fires. iOS Safari never fires that
             // event, so we show it unconditionally there with custom instructions.
-            btn.style.display = 'flex';
+            if (btn) btn.style.display = 'flex';
+            if (mobileBtn) mobileBtn.style.display = 'flex';
         }
         window.addEventListener('DOMContentLoaded', initInstallButton);
 
@@ -683,7 +686,9 @@
             e.preventDefault();
             deferredInstallPrompt = e;
             const btn = document.getElementById('installAppBtn');
+            const mobileBtn = document.getElementById('installAppBtnMobile');
             if (btn) btn.style.display = 'flex';
+            if (mobileBtn) mobileBtn.style.display = 'flex';
         });
         async function installAuraApp() {
             if (isIosDevice()) {
@@ -694,7 +699,10 @@
                 deferredInstallPrompt.prompt();
                 await deferredInstallPrompt.userChoice;
                 deferredInstallPrompt = null;
-                document.getElementById('installAppBtn').style.display = 'none';
+                const btn = document.getElementById('installAppBtn');
+                const mobileBtn = document.getElementById('installAppBtnMobile');
+                if (btn) btn.style.display = 'none';
+                if (mobileBtn) mobileBtn.style.display = 'none';
                 return;
             }
             // Browser doesn't support/hasn't fired beforeinstallprompt yet
@@ -703,7 +711,9 @@
         }
         window.addEventListener('appinstalled', () => {
             const btn = document.getElementById('installAppBtn');
+            const mobileBtn = document.getElementById('installAppBtnMobile');
             if (btn) btn.style.display = 'none';
+            if (mobileBtn) mobileBtn.style.display = 'none';
         });
     </script>
     <script>
