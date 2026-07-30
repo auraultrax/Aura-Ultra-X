@@ -225,6 +225,7 @@
         
         .lider-badge { background: linear-gradient(45deg, #fbbf24, #d97706); color: black; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 4px; }
         .post-time { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .username-tag { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; display: block; }
         
         .btn-vote { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 14px; border-radius: 99px; font-size: 0.85rem; cursor: pointer; font-weight: 700; transition: var(--transition); }
         .btn-vote:hover { background: var(--accent); color: white; box-shadow: 0 0 12px rgba(236, 72, 153, 0.4); }
@@ -409,6 +410,7 @@
                     <div class="user-avatar-mini" id="sidebarAvatar">U</div>
                     <div class="user-info-mini">
                         <h4 id="sidebarUsername">User</h4>
+                        <span id="sidebarUsernameTag" class="username-tag"></span>
                         <p id="sidebarRole">Kullanıcı</p>
                     </div>
                 </div>
@@ -814,6 +816,7 @@
             const userBadge = (currentUser === ADMIN_USER || db.users[currentUser]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
             const visibleName = currentUser === ADMIN_USER ? 'Aura X' : (db.users[currentUser]?.displayName || 'Kullanıcı');
             document.getElementById('sidebarUsername').innerHTML = `${visibleName} ${userBadge}`;
+            document.getElementById('sidebarUsernameTag').innerText = currentUser === ADMIN_USER ? '' : `@${currentUser}`;
             
             if (currentUser === ADMIN_USER) {
                 document.getElementById('sidebarRole').innerHTML = `<span style="color:var(--danger); font-weight:bold;">Sistem Yöneticisi</span>`;
@@ -984,6 +987,7 @@
                                 <div class="user-avatar-mini">${visibleAuthor.charAt(0).toUpperCase()}</div>
                                 <div class="post-user-info">
                                     <span class="post-user-name">${visibleAuthor} ${isVerified} ${isLider}</span>
+                                    ${post.author !== ADMIN_USER ? `<span class="username-tag">@${post.author}</span>` : ''}
                                     <span class="post-time">${timeAgo(post.timestamp)}</span>
                                 </div>
                             </div>
