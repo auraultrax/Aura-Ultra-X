@@ -348,6 +348,18 @@
         .follow-btn { flex-shrink: 0; border: 1px solid var(--primary); background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .follow-btn.following { background: transparent; color: var(--text-secondary, #ccc); border-color: var(--border); }
         .search-empty-state { text-align: center; opacity: 0.6; font-size: 13px; padding: 30px 10px; }
+
+        #supportFab {
+            position: fixed; right: 20px; bottom: 24px; z-index: 9998;
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+        }
+        @media (max-width: 900px) {
+            #supportFab { bottom: 90px; right: 16px; width: 48px; height: 48px; font-size: 18px; }
+        }
         .action-title { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; font-weight: 600; }
         .action-btn { background: #2c2c32; color: white; border: none; padding: 15px; border-radius: 14px; font-size: 1rem; font-weight: 600; width: 100%; cursor: pointer; transition: var(--transition); }
         .action-btn:hover { background: #383840; }
@@ -606,6 +618,11 @@
             <div id="searchResultsList"></div>
         </div>
     </div>
+
+    <!-- DESTEK BUTONU -->
+    <a id="supportFab" href="mailto:xauraultra@gmail.com?subject=Aura%20X%20Destek" aria-label="Destek" title="Destek">
+        <i class="fa-solid fa-headset"></i>
+    </a>
 
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1028,7 +1045,38 @@
 
         function getBase64(file, callback) {
             const reader = new FileReader();
-            reader.addEventListener('load', () => callback(reader.result));
+            reader.addEventListener('load', () => {
+                const img = new Image();
+                img.onload = () => {
+                    // Görseli küçültüp JPEG'e çeviriyoruz: Firestore'un belge başına
+                    // ~1MB sınırı var, yüksek çözünürlüklü telefon fotoğrafları bu
+                    // sınırı kolayca aşıp gönderimi sessizce başarısız kılıyordu.
+                    const MAX_DIM = 1280;
+                    let { width, height } = img;
+                    if (width > MAX_DIM || height > MAX_DIM) {
+                        if (width > height) { height = Math.round(height * (MAX_DIM / width)); width = MAX_DIM; }
+                        else { width = Math.round(width * (MAX_DIM / height)); height = MAX_DIM; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let quality = 0.8;
+                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    while (dataUrl.length > 700000 && quality > 0.35) {
+                        quality -= 0.1;
+                        dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    }
+                    if (dataUrl.length > 900000) {
+                        showToast('Görsel hâlâ çok büyük, daha küçük bir görsel dener misin?', 'error');
+                        return;
+                    }
+                    callback(dataUrl);
+                };
+                img.onerror = () => showToast('Bu görsel formatı desteklenmiyor (ör. HEIC). Lütfen JPEG/PNG olarak dener misin?', 'error');
+                img.src = reader.result;
+            });
+            reader.addEventListener('error', () => showToast('Görsel okunamadı, tekrar deneyin.', 'error'));
             reader.readAsDataURL(file);
         }
 
