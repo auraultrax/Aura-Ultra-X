@@ -168,6 +168,13 @@
         .nav-link:hover { background: var(--bg-surface-hover); color: var(--text-main); }
         .nav-link.active { background: var(--primary); color: white; box-shadow: var(--shadow-neon); }
         .nav-link i { width: 22px; text-align: center; font-size: 1.2rem; }
+        .nav-link { position: relative; }
+
+        /* BİLDİRİM ZİLİ VE RAKAM ROZETİ */
+        .notif-badge-dot { position: absolute; top: 8px; left: 30px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 0.65rem; font-weight: 800; display: none; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--bg-surface); }
+        .notif-badge-dot.show { display: flex; }
+        .mobile-nav-item { position: relative; }
+        .mobile-nav-item .notif-badge-dot { top: -6px; left: 16px; }
         
         .user-profile-btn {
             display: flex; align-items: center; gap: 12px;
@@ -360,6 +367,17 @@
         .race-car { position: absolute; top: 50%; transform: translate(-4px, -50%); font-size: 22px; transition: left 0.15s linear; }
         #gasBtn { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
+        #notifModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        #notifModalOverlay.show { display: flex; opacity: 1; }
+        #notifModal { background: #1c1c20; border: 1px solid var(--border); border-radius: 20px; width: 92%; max-width: 420px; max-height: 78vh; display: flex; flex-direction: column; overflow: hidden; }
+        #notifResultsList { overflow-y: auto; padding: 4px 10px 16px; display: flex; flex-direction: column; gap: 4px; }
+        .notif-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); }
+        .notif-item:hover { background: rgba(255,255,255,0.04); }
+        .notif-item.unread { background: rgba(139, 92, 246, 0.1); }
+        .notif-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--primary); }
+        .notif-text { font-size: 13.5px; line-height: 1.4; }
+        .notif-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
         #supportFab {
             position: fixed; right: 20px; bottom: 24px; z-index: 9998;
             width: 52px; height: 52px; border-radius: 50%;
@@ -450,6 +468,7 @@
                 <nav class="nav-menu">
                     <a class="nav-link active" onclick="switchView('kesfet')"><i class="fa-solid fa-compass"></i> Keşfet</a>
                     <a class="nav-link" onclick="openSearchPanel()"><i class="fa-solid fa-magnifying-glass"></i> Kullanıcı Bul</a>
+                    <a class="nav-link" onclick="openNotifPanel()"><i class="fa-solid fa-bell"></i> Bildirimler <span class="notif-badge-dot" id="notifBadgeSidebar">0</span></a>
                     <a class="nav-link" onclick="switchView('odalar')"><i class="fa-solid fa-comments"></i> Odalar</a>
                     <a class="nav-link" onclick="switchView('liderlik')"><i class="fa-solid fa-trophy"></i> Liderlik</a>
                     <a class="nav-link" id="navAdmin" style="display:none; color: var(--danger);" onclick="switchView('yonetim')"><i class="fa-solid fa-shield-halved"></i> Yönetim</a>
@@ -593,6 +612,7 @@
     <div class="mobile-bottom-nav">
         <a class="mobile-nav-item active" onclick="switchView('kesfet')"><i class="fa-solid fa-compass"></i></a>
         <a class="mobile-nav-item" onclick="openSearchPanel()"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a class="mobile-nav-item" onclick="openNotifPanel()"><i class="fa-solid fa-bell"></i><span class="notif-badge-dot" id="notifBadgeMobile">0</span></a>
         <a class="mobile-nav-item" onclick="switchView('odalar')"><i class="fa-solid fa-comments"></i></a>
         <a class="mobile-nav-item" onclick="switchView('liderlik')"><i class="fa-solid fa-trophy"></i></a>
         <a class="mobile-nav-item" id="mobileNavAdmin" style="display:none; color: var(--danger);" onclick="switchView('yonetim')"><i class="fa-solid fa-shield-halved"></i></a>
@@ -642,6 +662,17 @@
         </div>
     </div>
 
+    <!-- BİLDİRİMLER -->
+    <div id="notifModalOverlay" onclick="if(event.target===this) closeNotifPanel()">
+        <div id="notifModal">
+            <div class="search-modal-header">
+                <h3>Bildirimler</h3>
+                <i class="fa-solid fa-xmark" onclick="closeNotifPanel()"></i>
+            </div>
+            <div id="notifResultsList"></div>
+        </div>
+    </div>
+
     <!-- DESTEK BUTONU -->
     <a id="supportFab" href="mailto:xauraultra@gmail.com?subject=Aura%20X%20Destek" aria-label="Destek" title="Destek">
         <i class="fa-solid fa-headset"></i>
@@ -667,17 +698,46 @@
                 new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'İşlem') + ' zaman aşımına uğradı.')), ms))
             ]);
         }
-        let firebaseReady = withTimeout(
-            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        // Eski/düşük seviye cihazlarda (ör. Android Go telefonlar) tarayıcının
+        // IndexedDB'si bozuk, kapalı ya da eksik olabiliyor. Bu durumda
+        // setPersistence(LOCAL) sonsuza kadar takılabiliyor ve kullanıcı
+        // interneti olsa bile "sunucuya bağlanılamadı" hatası alıyordu.
+        // Burada önce IndexedDB'nin gerçekten çalışıp çalışmadığını kontrol
+        // ediyoruz; çalışmıyorsa oturumu belleğe (NONE) alıp girişin
+        // tamamlanmasına izin veriyoruz (yalnızca sayfa kapanınca oturum sıfırlanır).
+        function supportsIndexedDB() {
+            try { return 'indexedDB' in window && window.indexedDB !== null; } catch (e) { return false; }
+        }
+        function attemptFirebaseAuth() {
+            const persistenceMode = supportsIndexedDB()
+                ? firebase.auth.Auth.Persistence.LOCAL
+                : firebase.auth.Auth.Persistence.NONE;
+            return firebase.auth().setPersistence(persistenceMode)
                 .catch(err => console.error('Persistence ayarlanamadı:', err))
                 .then(() => firebase.auth().currentUser
                     ? firebase.auth().currentUser
-                    : firebase.auth().signInAnonymously().then(result => result.user)),
-            12000,
-            'Giriş'
-        ).catch(err => {
+                    : firebase.auth().signInAnonymously().then(result => result.user));
+        }
+        // Zayıf/yavaş bağlantılarda (özellikle eski cihazlarda) tek seferlik bir
+        // zaman aşımı yanlış pozitif verebiliyor. Bu yüzden ilk deneme başarısız
+        // olursa otomatik olarak bir kez daha deniyoruz, sonra hata gösteriyoruz.
+        async function connectFirebaseWithRetry() {
+            const TIMEOUT_MS = 20000;
+            try {
+                return await withTimeout(attemptFirebaseAuth(), TIMEOUT_MS, 'Giriş');
+            } catch (firstErr) {
+                console.warn('İlk bağlantı denemesi başarısız, tekrar deneniyor:', firstErr);
+                return await withTimeout(attemptFirebaseAuth(), TIMEOUT_MS, 'Giriş');
+            }
+        }
+        let firebaseReady = connectFirebaseWithRetry().catch(err => {
             console.error('Firebase Auth:', err);
-            showToast('Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip sayfayı yenileyin.', 'error');
+            // "İnternetiniz yok" demeden önce tarayıcının kendi bildirdiği
+            // bağlantı durumuna bakıyoruz; cihaz çevrimiçiyse mesaj buna göre değişiyor.
+            const msg = (typeof navigator !== 'undefined' && navigator.onLine === false)
+                ? 'İnternet bağlantısı bulunamadı. Bağlantınızı kontrol edip tekrar deneyin.'
+                : 'Sunucuya bağlanılamadı. Bağlantınız zayıf olabilir ya da tarayıcınız güncel olmayabilir. Sayfayı yenileyip tekrar deneyin.';
+            showToast(msg, 'error');
             const authLoading = document.getElementById('authLoadingOverlay');
             if (authLoading) authLoading.style.display = 'none';
             throw err;
@@ -971,6 +1031,137 @@
         }
 
         /* ==========================================================================
+           3B. BİLDİRİM SİSTEMİ (yorum / yanıt / oda-yarış bildirimleri)
+           - notifications koleksiyonu: { to, from, type, text, read, createdAt, ...extra }
+           - Uygulama açıkken gerçek zamanlı çalışır (Firestore onSnapshot).
+           - Tarayıcı izin verirse, sekme arka plandayken cihaz bildirimi de gösterir.
+           NOT: Bu, uygulama TAMAMEN KAPALIYKEN bildirim gönderemez (bunun için
+           Firebase Cloud Messaging + bir sunucu/Cloud Function gerekir). Uygulama
+           açık/arka planda olduğu sürece anlık çalışır.
+           ========================================================================== */
+        let db_notifications = [];
+        let notifUnsubscribe = null;
+        let notifFirstLoad = true;
+
+        function subscribeNotifications() {
+            if (!currentUser) return;
+            if (notifUnsubscribe) { notifUnsubscribe(); notifUnsubscribe = null; }
+            notifFirstLoad = true;
+            notifUnsubscribe = firestore.collection('notifications')
+                .where('to', '==', currentUser)
+                .onSnapshot(snapshot => {
+                    db_notifications = [];
+                    snapshot.forEach(doc => db_notifications.push({ id: doc.id, ...doc.data() }));
+                    db_notifications.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+                    if (!notifFirstLoad) {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const n = { id: change.doc.id, ...change.doc.data() };
+                                showToast(n.text, 'success');
+                                fireBrowserNotification(n);
+                            }
+                        });
+                    }
+                    notifFirstLoad = false;
+
+                    renderNotifBadge();
+                    const overlay = document.getElementById('notifModalOverlay');
+                    if (overlay && overlay.classList.contains('show')) renderNotifPanel();
+                }, err => console.error('Notifications snapshot:', err));
+        }
+
+        function renderNotifBadge() {
+            const count = db_notifications.filter(n => !n.read).length;
+            ['notifBadgeSidebar', 'notifBadgeMobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerText = count > 9 ? '9+' : String(count);
+                el.classList.toggle('show', count > 0);
+            });
+        }
+
+        function notifIcon(type) {
+            if (type === 'reply') return 'fa-reply';
+            if (type === 'comment') return 'fa-comment';
+            if (type === 'race') return 'fa-flag-checkered';
+            return 'fa-bell';
+        }
+
+        function renderNotifPanel() {
+            const list = document.getElementById('notifResultsList');
+            if (!list) return;
+            if (!db_notifications.length) {
+                list.innerHTML = '<div class="search-empty-state">Henüz bildirimin yok.</div>';
+                return;
+            }
+            list.innerHTML = db_notifications.map(n => `
+                <div class="notif-item ${n.read ? '' : 'unread'}" onclick="goToNotifTarget('${n.id}')">
+                    <div class="notif-icon"><i class="fa-solid ${notifIcon(n.type)}"></i></div>
+                    <div>
+                        <div class="notif-text">${n.text}</div>
+                        <div class="notif-time">${timeAgo(n.createdAt || Date.now())}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openNotifPanel() {
+            document.getElementById('notifModalOverlay').classList.add('show');
+            renderNotifPanel();
+            requestNotifPermission();
+            // Panel açıldığında okunmamışlar okundu olarak işaretlenir, rozet sıfırlanır.
+            const unread = db_notifications.filter(n => !n.read);
+            if (unread.length) {
+                const batch = firestore.batch();
+                unread.forEach(n => batch.update(firestore.collection('notifications').doc(n.id), { read: true }));
+                batch.commit().catch(e => console.error('Bildirimler okundu işaretlenemedi:', e));
+            }
+        }
+        function closeNotifPanel() {
+            document.getElementById('notifModalOverlay').classList.remove('show');
+        }
+
+        function goToNotifTarget(notifId) {
+            const n = db_notifications.find(x => x.id === notifId);
+            closeNotifPanel();
+            if (!n) return;
+            if (n.type === 'race' && n.roomId) {
+                switchView('odalar');
+                if (db.rooms[n.roomId]) { enterRoomUI(n.roomId); setTimeout(openRacePanel, 250); }
+            } else {
+                switchView('kesfet');
+            }
+        }
+
+        // Bir kullanıcıya bildirim gönderir (kendine bildirim gitmez).
+        function sendNotification(toUsername, type, text, extra = {}) {
+            if (!toUsername || toUsername === currentUser) return;
+            firestore.collection('notifications').add({
+                to: toUsername,
+                from: currentUser,
+                type,
+                text,
+                read: false,
+                createdAt: Date.now(),
+                ...extra
+            }).catch(e => console.error('Bildirim gönderilemedi:', e));
+        }
+
+        function requestNotifPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().catch(() => {});
+            }
+        }
+        function fireBrowserNotification(n) {
+            try {
+                if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+                    new Notification('Aura Ultra X', { body: n.text, icon: 'icon-192.png' });
+                }
+            } catch (e) { console.error('Cihaz bildirimi gösterilemedi:', e); }
+        }
+
+        /* ==========================================================================
            4. BAŞLATMA VE YETKİLENDİRME
            ========================================================================== */
         window.onload = async () => {
@@ -1057,6 +1248,7 @@
 
             loadFeed();
             renderLeaderboard();
+            subscribeNotifications();
         }
 
         function switchView(viewId) {
@@ -1325,6 +1517,12 @@
             comments.push({ author: currentUser, text: val, replies: [] });
             await firestore.collection('posts').doc(post.id).update({ comments });
             setTimeout(() => { const el = document.getElementById(`comments_${index}`); if (el) el.style.display = 'block'; }, 50);
+
+            // Gönderi sahibine (kendisi değilse) yorum bildirimi gönder.
+            if (post.author && post.author !== currentUser) {
+                const authorName = db.users[currentUser]?.displayName || currentUser;
+                sendNotification(post.author, 'comment', `${authorName} gönderine yorum yaptı: "${val.slice(0, 60)}"`, { postId: post.id });
+            }
         }
 
         async function addReply(pIndex, cIndex) {
@@ -1334,9 +1532,16 @@
             const comments = Array.isArray(post.comments) ? JSON.parse(JSON.stringify(post.comments)) : [];
             if (!comments[cIndex]) return;
             if (!Array.isArray(comments[cIndex].replies)) comments[cIndex].replies = [];
+            const repliedTo = comments[cIndex].author;
             comments[cIndex].replies.push({ author: currentUser, text: val });
             await firestore.collection('posts').doc(post.id).update({ comments });
             setTimeout(() => { const el = document.getElementById(`comments_${pIndex}`); if (el) el.style.display = 'block'; }, 50);
+
+            // Yorumu yazan kişiye (kendisi değilse) yanıt bildirimi gönder.
+            if (repliedTo && repliedTo !== currentUser) {
+                const authorName = db.users[currentUser]?.displayName || currentUser;
+                sendNotification(repliedTo, 'reply', `${authorName} yorumuna yanıt verdi: "${val.slice(0, 60)}"`, { postId: post.id });
+            }
         }
 
         /* ==========================================================================
@@ -1572,6 +1777,16 @@
             if (!activeRoom) return;
             firestore.collection('rooms').doc(activeRoom).update({
                 race: { active: true, finished: false, winner: null, trackLength: RACE_TRACK_LENGTH, players: {}, startedBy: currentUser, startedAt: Date.now() }
+            }).then(() => {
+                // Önceden burada kimseye haber gitmiyordu; oda arkadaşları yarış
+                // panelini kendileri açıp bakmadıkça yarış başladığını anlamıyordu.
+                // Bu yüzden "arkadaşlarla oynayamıyorum" sorunu aslında bir haber
+                // verme sorunuydu. Şimdi odadaki diğer üyelere bildirim gidiyor.
+                const members = (activeRoomData && Array.isArray(activeRoomData.members)) ? activeRoomData.members : [];
+                const starterName = db.users[currentUser]?.displayName || currentUser;
+                members.forEach(member => {
+                    sendNotification(member, 'race', `${starterName}, "${activeRoom}" odasında yarış başlattı! Katılmak için dokun 🏁`, { roomId: activeRoom });
+                });
             }).catch(e => { console.error('Yarış başlatılamadı:', e); showToast('Yarış başlatılamadı.', 'error'); });
         }
 
