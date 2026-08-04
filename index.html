@@ -333,7 +333,7 @@
         .search-modal-header h3 { margin: 0; font-size: 17px; }
         .search-modal-header i { cursor: pointer; opacity: 0.7; padding: 4px; }
         .search-modal-tabs { display: flex; gap: 6px; padding: 0 18px 10px; }
-        .search-tab-btn { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-secondary, #999); padding: 8px 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .search-tab-btn { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-secondary, #999); padding: 8px 6px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
         .search-tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
         #searchInputWrap { padding: 0 18px 10px; }
         #searchInputWrap input { width: 100%; background: #101014; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-size: 14px; }
@@ -348,6 +348,17 @@
         .follow-btn { flex-shrink: 0; border: 1px solid var(--primary); background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .follow-btn.following { background: transparent; color: var(--text-secondary, #ccc); border-color: var(--border); }
         .search-empty-state { text-align: center; opacity: 0.6; font-size: 13px; padding: 30px 10px; }
+
+        #raceModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        #raceModalOverlay.show { display: flex; opacity: 1; }
+        #raceModal { background: #1c1c20; border: 1px solid var(--border); border-radius: 20px; width: 92%; max-width: 460px; max-height: 82vh; display: flex; flex-direction: column; overflow: hidden; }
+        #raceModalBody { overflow-y: auto; padding: 6px 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+        .race-lane { display: flex; flex-direction: column; gap: 4px; }
+        .race-lane-name { font-size: 12px; font-weight: 700; opacity: 0.85; }
+        .race-track { position: relative; height: 34px; background: #101014; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .race-finish { position: absolute; right: 6px; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(45deg, #fff 0 4px, #000 4px 8px); opacity: 0.8; }
+        .race-car { position: absolute; top: 50%; transform: translate(-4px, -50%); font-size: 22px; transition: left 0.15s linear; }
+        #gasBtn { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
         #supportFab {
             position: fixed; right: 20px; bottom: 24px; z-index: 9998;
@@ -611,11 +622,23 @@
             <div class="search-modal-tabs">
                 <button class="search-tab-btn active" id="searchTabBtn-search" onclick="switchSearchTab('search')">Ara</button>
                 <button class="search-tab-btn" id="searchTabBtn-following" onclick="switchSearchTab('following')">Takip Ettiklerim</button>
+                <button class="search-tab-btn" id="searchTabBtn-followers" onclick="switchSearchTab('followers')">Takipçilerim</button>
             </div>
             <div id="searchInputWrap">
                 <input type="text" id="searchUserInput" placeholder="Kullanıcı adı ile ara..." oninput="renderUserSearch()">
             </div>
             <div id="searchResultsList"></div>
+        </div>
+    </div>
+
+    <!-- 1D ARABA YARIŞI -->
+    <div id="raceModalOverlay" onclick="if(event.target===this) closeRacePanel()">
+        <div id="raceModal">
+            <div class="search-modal-header">
+                <h3>🏁 1D Araba Yarışı</h3>
+                <i class="fa-solid fa-xmark" onclick="closeRacePanel()"></i>
+            </div>
+            <div id="raceModalBody"></div>
         </div>
     </div>
 
@@ -892,6 +915,12 @@
             if (currentUser) {
                 renderLeaderboard();
                 loadFeed();
+                const searchOverlay = document.getElementById('searchModalOverlay');
+                if (searchOverlay && searchOverlay.classList.contains('show')) {
+                    if (currentSearchTab === 'search') renderUserSearch();
+                    else if (currentSearchTab === 'following') renderFollowingList();
+                    else renderFollowersList();
+                }
             }
         }, err => console.error('Users snapshot:', err));
 
@@ -1387,13 +1416,17 @@
                 if (!doc.exists) { showToast("Bu oda silindi.", "error"); leaveRoom(); return; }
                 activeRoomData = {id:doc.id, ...doc.data()};
                 const isAdmin = activeRoomData.admin === currentUser || currentUser === ADMIN_USER;
-                document.getElementById('roomChatHeaderActions').innerHTML = `${isAdmin ? '<button class="btn btn-danger" onclick="deleteActiveRoom()">Odayı Sil</button>' : ''}<button class="btn btn-outline" onclick="leaveRoom()">Çık</button>`;
+                document.getElementById('roomChatHeaderActions').innerHTML = `<button class="btn btn-outline" onclick="openRacePanel()" title="1D Araba Yarışı"><i class="fa-solid fa-flag-checkered"></i></button>${isAdmin ? '<button class="btn btn-danger" onclick="deleteActiveRoom()">Odayı Sil</button>' : ''}<button class="btn btn-outline" onclick="leaveRoom()">Çık</button>`;
                 renderChat();
+                const raceOverlay = document.getElementById('raceModalOverlay');
+                if (raceOverlay && raceOverlay.classList.contains('show')) renderRacePanel();
             });
         }
 
         function leaveRoom() {
             if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+            stopGas();
+            closeRacePanel();
             activeRoom = null; activeRoomData = null;
             document.getElementById('roomSelectionArea').style.display = 'block';
             document.getElementById('roomChatArea').style.display = 'none';
@@ -1449,14 +1482,18 @@
             currentSearchTab = tab;
             document.getElementById('searchTabBtn-search').classList.toggle('active', tab === 'search');
             document.getElementById('searchTabBtn-following').classList.toggle('active', tab === 'following');
+            document.getElementById('searchTabBtn-followers').classList.toggle('active', tab === 'followers');
             document.getElementById('searchInputWrap').style.display = tab === 'search' ? 'block' : 'none';
-            if (tab === 'search') renderUserSearch(); else renderFollowingList();
+            if (tab === 'search') renderUserSearch();
+            else if (tab === 'following') renderFollowingList();
+            else renderFollowersList();
         }
 
         function renderUserRow(username) {
+            if (username === ADMIN_USER) return ''; // Yönetici hesabı takip listelerinde hiç görünmez.
             const u = db.users[username] || {};
-            const displayName = username === ADMIN_USER ? 'Aura X' : (u.displayName || username);
-            const verified = (username === ADMIN_USER || u.verified) ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : '';
+            const displayName = u.displayName || username;
+            const verified = u.verified ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : '';
             const myFollowing = (db.users[currentUser] && db.users[currentUser].following) || [];
             const isFollowing = myFollowing.includes(username);
             const followBtn = username === currentUser ? '' :
@@ -1478,7 +1515,7 @@
             const list = document.getElementById('searchResultsList');
             if (!q) { list.innerHTML = '<div class="search-empty-state">Aramak için bir kullanıcı adı yazın.</div>'; return; }
             const matches = Object.keys(db.users).filter(username =>
-                username !== currentUser &&
+                username !== currentUser && username !== ADMIN_USER &&
                 (username.toLowerCase().includes(q) || ((db.users[username].displayName || '').toLowerCase().includes(q)))
             );
             list.innerHTML = matches.length ? matches.map(renderUserRow).join('') : '<div class="search-empty-state">Kullanıcı bulunamadı.</div>';
@@ -1486,31 +1523,136 @@
 
         function renderFollowingList() {
             const list = document.getElementById('searchResultsList');
-            const following = (db.users[currentUser] && db.users[currentUser].following) || [];
+            const following = ((db.users[currentUser] && db.users[currentUser].following) || []).filter(u => u !== ADMIN_USER);
             list.innerHTML = following.length ? following.map(renderUserRow).join('') : '<div class="search-empty-state">Henüz kimseyi takip etmiyorsun.</div>';
+        }
+
+        function renderFollowersList() {
+            const list = document.getElementById('searchResultsList');
+            const followers = Object.keys(db.users).filter(u =>
+                u !== ADMIN_USER && u !== currentUser && ((db.users[u].following) || []).includes(currentUser)
+            );
+            list.innerHTML = followers.length ? followers.map(renderUserRow).join('') : '<div class="search-empty-state">Henüz takipçin yok.</div>';
         }
 
         async function toggleFollow(username) {
             const myFollowing = (db.users[currentUser] && db.users[currentUser].following) || [];
             const isFollowing = myFollowing.includes(username);
             try {
+                // NOT: Yerel diziyi burada elle güncellemiyoruz — 'users' koleksiyonundaki
+                // canlı dinleyici (onSnapshot) zaten db.users'ı güncelleyip ilgili sekmeyi
+                // yeniden çiziyor. Elle ekleme yapmak, aynı takibin iki kez görünmesine
+                // (çift kayıt) yol açıyordu.
                 await firestore.collection('users').doc(currentUser).update({
                     following: isFollowing
                         ? firebase.firestore.FieldValue.arrayRemove(username)
                         : firebase.firestore.FieldValue.arrayUnion(username)
                 });
-                if (!db.users[currentUser]) db.users[currentUser] = {};
-                if (!db.users[currentUser].following) db.users[currentUser].following = [];
-                if (isFollowing) {
-                    db.users[currentUser].following = db.users[currentUser].following.filter(u => u !== username);
-                } else {
-                    db.users[currentUser].following.push(username);
-                }
-                if (currentSearchTab === 'search') renderUserSearch(); else renderFollowingList();
             } catch (e) {
                 console.error('Takip hatası:', e);
                 showToast('İşlem gerçekleştirilemedi, tekrar deneyin.', 'error');
             }
+        }
+
+        /* --- 1D ARABA YARIŞI --- */
+        const RACE_TRACK_LENGTH = 300;
+        let gasInterval = null;
+
+        function openRacePanel() {
+            if (!activeRoom) return;
+            document.getElementById('raceModalOverlay').classList.add('show');
+            renderRacePanel();
+        }
+        function closeRacePanel() {
+            document.getElementById('raceModalOverlay').classList.remove('show');
+            stopGas();
+        }
+
+        function startRace() {
+            if (!activeRoom) return;
+            firestore.collection('rooms').doc(activeRoom).update({
+                race: { active: true, finished: false, winner: null, trackLength: RACE_TRACK_LENGTH, players: {}, startedBy: currentUser, startedAt: Date.now() }
+            }).catch(e => { console.error('Yarış başlatılamadı:', e); showToast('Yarış başlatılamadı.', 'error'); });
+        }
+
+        function joinRace() {
+            if (!activeRoom || !activeRoomData || !activeRoomData.race) return;
+            firestore.collection('rooms').doc(activeRoom).update({
+                [`race.players.${currentUser}`]: 0
+            }).catch(e => console.error('Yarışa katılamadı:', e));
+        }
+
+        function pressGasOnce() {
+            if (!activeRoom || !activeRoomData || !activeRoomData.race || activeRoomData.race.finished) { stopGas(); return; }
+            const players = activeRoomData.race.players || {};
+            if (!(currentUser in players)) { stopGas(); return; }
+            const step = 2 + Math.floor(Math.random() * 3); // 2-4 birim
+            firestore.collection('rooms').doc(activeRoom).update({
+                [`race.players.${currentUser}`]: firebase.firestore.FieldValue.increment(step)
+            }).catch(e => console.error('Gaz basılamadı:', e));
+        }
+        function startGas() {
+            if (gasInterval) return;
+            pressGasOnce();
+            gasInterval = setInterval(pressGasOnce, 150);
+        }
+        function stopGas() {
+            if (gasInterval) { clearInterval(gasInterval); gasInterval = null; }
+        }
+
+        async function checkRaceWinner() {
+            if (!activeRoom || !activeRoomData || !activeRoomData.race || activeRoomData.race.finished) return;
+            const race = activeRoomData.race;
+            const candidate = Object.keys(race.players || {}).find(u => race.players[u] >= race.trackLength);
+            if (!candidate) return;
+            try {
+                const ref = firestore.collection('rooms').doc(activeRoom);
+                await firestore.runTransaction(async (tx) => {
+                    const snap = await tx.get(ref);
+                    const data = snap.data();
+                    if (!data || !data.race || data.race.finished) return;
+                    const players = data.race.players || {};
+                    const winner = Object.keys(players).find(u => players[u] >= data.race.trackLength);
+                    if (!winner) return;
+                    tx.update(ref, { 'race.finished': true, 'race.winner': winner, 'race.active': false });
+                });
+            } catch (e) { console.error('Yarış bitirme hatası:', e); }
+        }
+
+        function renderRacePanel() {
+            const wrap = document.getElementById('raceModalBody');
+            if (!wrap || !activeRoomData) return;
+            const race = activeRoomData.race;
+            if (!race) {
+                wrap.innerHTML = `<div class="search-empty-state">Bu odada henüz yarış başlamadı. Arkadaşlarınla yarışmak için başlat!</div><button class="btn" style="width:100%;" onclick="startRace()">🏁 Yarış Başlat</button>`;
+                return;
+            }
+            checkRaceWinner();
+            const players = race.players || {};
+            const joined = currentUser in players;
+            let lanes = Object.keys(players).map(u => {
+                const pct = Math.min(100, (players[u] / race.trackLength) * 100);
+                const name = (db.users[u] && db.users[u].displayName) || u;
+                return `<div class="race-lane">
+                    <div class="race-lane-name">${name}${u === currentUser ? ' (Sen)' : ''}</div>
+                    <div class="race-track"><div class="race-finish"></div><div class="race-car" style="left:${pct}%;">🚗</div></div>
+                </div>`;
+            }).join('');
+            if (!lanes) lanes = '<div class="search-empty-state">Henüz kimse katılmadı.</div>';
+
+            let controls = '';
+            if (race.finished) {
+                const winnerName = (db.users[race.winner] && db.users[race.winner].displayName) || race.winner;
+                controls = `<div style="text-align:center;font-weight:800;font-size:16px;margin-top:4px;">🏆 Kazanan: ${winnerName}</div>
+                    <button class="btn" style="width:100%;" onclick="startRace()">Yeni Yarış</button>`;
+            } else if (!joined) {
+                controls = `<button class="btn" style="width:100%;" onclick="joinRace()">Yarışa Katıl</button>`;
+            } else {
+                controls = `<button id="gasBtn" class="btn" style="width:100%;font-size:20px;padding:18px;"
+                    onpointerdown="startGas()" onpointerup="stopGas()" onpointerleave="stopGas()" onpointercancel="stopGas()">🚀 GAZ!</button>
+                    <div style="text-align:center;font-size:12px;opacity:0.6;margin-top:6px;">Kazanmak için basılı tut!</div>`;
+            }
+            wrap.innerHTML = lanes + controls;
         }
 
         /* --- IOS ACTION SHEET (UZUN BASMA KOŞULLARI) --- */
