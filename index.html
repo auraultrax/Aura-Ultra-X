@@ -290,6 +290,19 @@
         .msg-info { font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted); display: flex; gap: 6px; align-items: center; }
         .me .msg-info { justify-content: flex-end; }
         .msg-admin-badge { color: var(--gold); font-size: 0.85rem; }
+        .msg-reply-preview { font-size: 0.78rem; opacity: 0.75; border-left: 3px solid rgba(255,255,255,0.4); padding-left: 8px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .others .msg-reply-preview { border-left-color: var(--primary); }
+        .msg-edited-tag { font-size: 0.68rem; opacity: 0.6; margin-left: 6px; }
+        .msg-reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .chat-msg.me .msg-reactions { justify-content: flex-end; }
+        .msg-reaction-pill { background: var(--bg-surface-hover); border: 1px solid var(--border); border-radius: 99px; padding: 2px 8px; font-size: 0.78rem; cursor: pointer; }
+        .msg-reaction-pill.mine { border-color: var(--primary); background: rgba(139,92,246,0.15); }
+        .emoji-picker-row { display: flex; justify-content: space-between; padding: 6px 4px 14px; font-size: 1.6rem; }
+        .emoji-picker-row span { cursor: pointer; transition: transform 0.15s; }
+        .emoji-picker-row span:active { transform: scale(1.3); }
+        #chatReplyBar { display: none; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-surface-hover); border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); }
+        #chatReplyBar .chat-reply-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        #chatReplyBar i { cursor: pointer; padding: 4px 8px; }
         .chat-img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1); }
         
         .chat-input-area { padding: 15px; background: var(--bg-surface); border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
@@ -548,6 +561,10 @@
                         </div>
                     </div>
                     <div class="chat-messages" id="chatContainer"></div>
+                    <div id="chatReplyBar">
+                        <div class="chat-reply-text"></div>
+                        <i class="fa-solid fa-xmark" onclick="cancelReply(); cancelEditMsg();"></i>
+                    </div>
                     <div class="chat-input-area">
                         <label for="chatImage"><i class="fa-solid fa-image" style="font-size: 1.4rem; color: var(--primary); cursor: pointer;"></i></label>
                         <input type="file" id="chatImage" accept="image/*" style="display: none;" onchange="showToast('Resim hazır', 'success')">
@@ -624,11 +641,7 @@
     <div id="actionSheetOverlay" onclick="if(event.target===this) closeActionSheet()">
         <div id="actionSheet">
             <div class="action-title" id="actionTargetUser">Kullanıcı Yönetimi</div>
-            <button class="action-btn" id="btnToggleMute" onclick="actionMute()">Engelle (Sustur)</button>
-            <button class="action-btn danger" onclick="actionDeleteMsg()">Mesajı Sil</button>
-            <button class="action-btn danger" onclick="actionKick()">Odadan At</button>
-            <button class="action-btn danger" onclick="actionReport()">Yöneticiye Şikayet Et</button>
-            <button class="action-btn cancel" onclick="closeActionSheet()">Kapat</button>
+            <div id="actionSheetButtons"></div>
         </div>
     </div>
 
@@ -734,9 +747,11 @@
             console.error('Firebase Auth:', err);
             // "İnternetiniz yok" demeden önce tarayıcının kendi bildirdiği
             // bağlantı durumuna bakıyoruz; cihaz çevrimiçiyse mesaj buna göre değişiyor.
+            // Gerçek hata kodunu da ekliyoruz ki sorun cihaza göre değişiyorsa anlaşılabilsin.
+            const code = err && (err.code || err.message) ? ` (${err.code || err.message})` : '';
             const msg = (typeof navigator !== 'undefined' && navigator.onLine === false)
-                ? 'İnternet bağlantısı bulunamadı. Bağlantınızı kontrol edip tekrar deneyin.'
-                : 'Sunucuya bağlanılamadı. Bağlantınız zayıf olabilir ya da tarayıcınız güncel olmayabilir. Sayfayı yenileyip tekrar deneyin.';
+                ? 'İnternet bağlantısı bulunamadı. Bağlantınızı kontrol edip tekrar deneyin.' + code
+                : 'Sunucuya bağlanılamadı. Bağlantınız zayıf olabilir ya da tarayıcınız güncel olmayabilir. Sayfayı yenileyip tekrar deneyin.' + code;
             showToast(msg, 'error');
             const authLoading = document.getElementById('authLoadingOverlay');
             if (authLoading) authLoading.style.display = 'none';
@@ -1014,6 +1029,9 @@
         let activeRoom = null;
         let longPressTimer;
         let targetActionMsg = null;
+        let replyingToMsg = null;
+        let editingMsgId = null;
+        const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
         /* ==========================================================================
            3. TOAST BİLDİRİM SİSTEMİ
@@ -1613,6 +1631,7 @@
 
         function enterRoomUI(roomName) {
             activeRoom = roomName;
+            cancelReply(); cancelEditMsg();
             document.getElementById('roomSelectionArea').style.display = 'none';
             document.getElementById('roomChatArea').style.display = 'flex';
             document.getElementById('activeRoomTitle').innerText = roomName;
@@ -1632,6 +1651,7 @@
             if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
             stopGas();
             closeRacePanel();
+            cancelReply(); cancelEditMsg();
             activeRoom = null; activeRoomData = null;
             document.getElementById('roomSelectionArea').style.display = 'block';
             document.getElementById('roomChatArea').style.display = 'none';
@@ -1653,7 +1673,12 @@
                 const admin = m.author === r.admin ? `<i class="fa-solid fa-crown msg-admin-badge"></i>` : '';
                 const verified = (m.author === ADMIN_USER || db.users[m.author]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
                 const evts = `onmousedown="startPress('${m.id}')" onmouseup="endPress()" onmouseleave="endPress()" ontouchstart="startPress('${m.id}')" ontouchend="endPress()"`;
-                c.innerHTML += `<div class="chat-msg ${me?'me':'others'}"><div class="msg-info">${m.author} ${verified} ${admin}</div><div class="msg-bubble" ${evts}>${m.text || ''}${img}</div></div>`;
+                const replyHtml = m.replyTo ? `<div class="msg-reply-preview">↩ ${m.replyTo.author}: ${m.replyTo.text}</div>` : '';
+                const editedHtml = m.edited ? `<span class="msg-edited-tag">(düzenlendi)</span>` : '';
+                const reactions = m.reactions || {};
+                const reactionKeys = Object.keys(reactions).filter(k => reactions[k] && reactions[k].length);
+                const reactionsHtml = reactionKeys.length ? `<div class="msg-reactions">${reactionKeys.map(e => `<span class="msg-reaction-pill ${reactions[e].includes(currentUser) ? 'mine' : ''}" onclick="toggleReaction('${m.id}','${e}')">${e} ${reactions[e].length}</span>`).join('')}</div>` : '';
+                c.innerHTML += `<div class="chat-msg ${me?'me':'others'}"><div class="msg-info">${m.author} ${verified} ${admin}</div><div class="msg-bubble" ${evts}>${replyHtml}${m.text || ''}${img}${editedHtml}</div>${reactionsHtml}</div>`;
             });
             c.scrollTop = c.scrollHeight;
         }
@@ -1665,10 +1690,78 @@
             const text = document.getElementById('chatInput').value.trim();
             const fileInp = document.getElementById('chatImage');
             if (!text && !fileInp.files[0]) return;
-            const msg = {id:Date.now().toString(), author:currentUser, text, img:null, timestamp:Date.now()};
+
+            // DÜZENLEME MODU: yeni mesaj eklemek yerine mevcut mesajı güncelle.
+            if (editingMsgId) {
+                const messages = (activeRoomData.messages || []).map(m => m.id === editingMsgId ? { ...m, text, edited: true } : m);
+                firestore.collection('rooms').doc(activeRoom).update({ messages }).catch(console.error);
+                document.getElementById('chatInput').value = '';
+                cancelEditMsg();
+                return;
+            }
+
+            const msg = { id: Date.now().toString(), author: currentUser, text, img: null, timestamp: Date.now(), edited: false, reactions: {}, replyTo: replyingToMsg || null };
             const save = () => firestore.collection('rooms').doc(activeRoom).update({messages:firebase.firestore.FieldValue.arrayUnion(msg)});
             if (fileInp.files[0]) getBase64(fileInp.files[0], b => { msg.img=b; save().catch(console.error); }); else save().catch(console.error);
             document.getElementById('chatInput').value=''; fileInp.value='';
+            cancelReply();
+        }
+
+        function startReply(msgId) {
+            closeActionSheet();
+            const msg = (activeRoomData.messages || []).find(x => x.id === msgId);
+            if (!msg) return;
+            cancelEditMsg();
+            replyingToMsg = { id: msg.id, author: msg.author, text: (msg.text || '').slice(0, 80) };
+            const bar = document.getElementById('chatReplyBar');
+            bar.style.display = 'flex';
+            bar.querySelector('.chat-reply-text').innerText = `${msg.author}: ${replyingToMsg.text}`;
+            document.getElementById('chatInput').focus();
+        }
+        function cancelReply() {
+            replyingToMsg = null;
+            const bar = document.getElementById('chatReplyBar');
+            if (bar && !editingMsgId) bar.style.display = 'none';
+        }
+
+        function startEditMsg(msgId) {
+            closeActionSheet();
+            const msg = (activeRoomData.messages || []).find(x => x.id === msgId);
+            if (!msg || msg.author !== currentUser) return;
+            cancelReply();
+            editingMsgId = msgId;
+            document.getElementById('chatInput').value = msg.text || '';
+            const bar = document.getElementById('chatReplyBar');
+            bar.style.display = 'flex';
+            bar.querySelector('.chat-reply-text').innerText = 'Mesaj düzenleniyor...';
+            document.getElementById('chatInput').focus();
+        }
+        function cancelEditMsg() {
+            editingMsgId = null;
+            const bar = document.getElementById('chatReplyBar');
+            if (bar && !replyingToMsg) bar.style.display = 'none';
+        }
+
+        function toggleReaction(msgId, emoji) {
+            if (!activeRoomData) return;
+            const messages = JSON.parse(JSON.stringify(activeRoomData.messages || []));
+            const m = messages.find(x => x.id === msgId);
+            if (!m) return;
+            if (!m.reactions) m.reactions = {};
+            const currentMsg = (activeRoomData.messages || []).find(x => x.id === msgId);
+            const already = !!(currentMsg && currentMsg.reactions && (currentMsg.reactions[emoji] || []).includes(currentUser));
+            // Kişi başına tek tepki: önce kullanıcının önceki tepkisini her yerden kaldır.
+            Object.keys(m.reactions).forEach(key => {
+                m.reactions[key] = (m.reactions[key] || []).filter(u => u !== currentUser);
+                if (!m.reactions[key].length) delete m.reactions[key];
+            });
+            if (!already) m.reactions[emoji] = [...(m.reactions[emoji] || []), currentUser];
+            firestore.collection('rooms').doc(activeRoom).update({ messages }).catch(console.error);
+        }
+        function actionReact(emoji) {
+            if (!targetActionMsg) return;
+            toggleReaction(targetActionMsg.id, emoji);
+            closeActionSheet();
         }
 
         /* --- KULLANICI BUL / TAKİP SİSTEMİ --- */
@@ -1870,11 +1963,8 @@
             wrap.innerHTML = lanes + controls;
         }
 
-        /* --- IOS ACTION SHEET (UZUN BASMA KOŞULLARI) --- */
+        /* --- IOS ACTION SHEET (UZUN BASMA MENÜSÜ) --- */
         function startPress(msgId) {
-            const r = activeRoomData;
-            if (r.admin !== currentUser && currentUser !== ADMIN_USER) return;
-            
             longPressTimer = setTimeout(() => {
                 openActionMenu(msgId);
             }, 450);
@@ -1883,20 +1973,34 @@
 
         function openActionMenu(msgId) {
             const r = activeRoomData;
-            const msg = r.messages.find(x => x.id === msgId);
-            if (!msg || msg.author === currentUser) return;
-            
-            if (msg.author === ADMIN_USER && currentUser !== ADMIN_USER) {
-                showToast("Sistem Yöneticisine işlem uygulanamaz!", "error");
-                return;
-            }
-            
+            const msg = (r.messages || []).find(x => x.id === msgId);
+            if (!msg) return;
             targetActionMsg = msg;
+
+            const isOwn = msg.author === currentUser;
+            const isRoomAdmin = r.admin === currentUser || currentUser === ADMIN_USER;
+            const isProtectedSystemMsg = msg.author === ADMIN_USER && currentUser !== ADMIN_USER;
+
             document.getElementById('actionTargetUser').innerText = "@" + msg.author;
-            
-            const isMuted = r.muted.includes(msg.author);
-            document.getElementById('btnToggleMute').innerText = isMuted ? "Susturmayı Kaldır" : "Engelle (Sustur)";
-            
+
+            let html = `<div class="emoji-picker-row">${REACTION_EMOJIS.map(e => `<span onclick="actionReact('${e}')">${e}</span>`).join('')}</div>`;
+            html += `<button class="action-btn" onclick="startReply('${msg.id}')">Yanıtla</button>`;
+
+            if (isOwn) {
+                html += `<button class="action-btn" onclick="startEditMsg('${msg.id}')">Düzenle</button>`;
+                html += `<button class="action-btn danger" onclick="actionDeleteMsg()">Mesajı Sil</button>`;
+            } else if (!isProtectedSystemMsg) {
+                if (isRoomAdmin) {
+                    const isMuted = (r.muted || []).includes(msg.author);
+                    html += `<button class="action-btn" onclick="actionMute()">${isMuted ? "Susturmayı Kaldır" : "Engelle (Sustur)"}</button>`;
+                    html += `<button class="action-btn danger" onclick="actionDeleteMsg()">Mesajı Sil</button>`;
+                    html += `<button class="action-btn danger" onclick="actionKick()">Odadan At</button>`;
+                }
+                html += `<button class="action-btn danger" onclick="actionReport()">Yöneticiye Şikayet Et</button>`;
+            }
+            html += `<button class="action-btn cancel" onclick="closeActionSheet()">Kapat</button>`;
+            document.getElementById('actionSheetButtons').innerHTML = html;
+
             document.getElementById('actionSheetOverlay').classList.add('show');
             setTimeout(() => { document.getElementById('actionSheet').classList.add('show'); }, 10);
         }
@@ -1914,6 +2018,10 @@
         }
 
         function actionDeleteMsg() {
+            if (!targetActionMsg) return;
+            const isOwn = targetActionMsg.author === currentUser;
+            const isRoomAdmin = (activeRoomData && activeRoomData.admin === currentUser) || currentUser === ADMIN_USER;
+            if (!isOwn && !isRoomAdmin) return;
             const messages = (activeRoomData.messages || []).filter(x=>x.id!==targetActionMsg.id);
             firestore.collection('rooms').doc(activeRoom).update({messages}).then(()=>{closeActionSheet();showToast("Mesaj silindi.");});
         }
@@ -2102,3 +2210,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+<!--
+  © 2026 Aura Ultra X — Tüm hakları saklıdır.
+  Muhammed Tanrıkulu
+-->
