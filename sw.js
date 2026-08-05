@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aura-x-v1';
+const CACHE_NAME = 'aura-x-v2';
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
@@ -16,7 +16,10 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request)
+    // "cache: 'no-store'" olmadan bazı cihazların tarayıcı önbelleği bu isteği
+    // ağa hiç göndermeden eski bir kopyayı geri verebiliyordu; bu da "sistem
+    // güncellenmiyor" sorununa yol açıyordu. Artık her istek gerçekten ağa gidiyor.
+    fetch(event.request, { cache: 'no-store' })
       .then(response => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
