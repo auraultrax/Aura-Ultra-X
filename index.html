@@ -405,6 +405,13 @@
         #notifModalOverlay.show { display: flex; opacity: 1; }
         #notifModal { background: #1c1c20; border: 1px solid var(--border); border-radius: 20px; width: 92%; max-width: 420px; max-height: 78vh; display: flex; flex-direction: column; overflow: hidden; }
         #notifResultsList { overflow-y: auto; padding: 4px 10px 16px; display: flex; flex-direction: column; gap: 4px; }
+
+        #profileModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        #profileModalOverlay.show { display: flex; opacity: 1; }
+        #profileModal { background: #1c1c20; border: 1px solid var(--border); border-radius: 20px; width: 92%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+        #profileModalBody { overflow-y: auto; padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+        #profileModalBody label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        #profileModalBody textarea.input-box { resize: vertical; min-height: 70px; font-family: inherit; }
         .notif-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); }
         .notif-item:hover { background: rgba(255,255,255,0.04); }
         .notif-item.unread { background: rgba(139, 92, 246, 0.1); }
@@ -511,7 +518,7 @@
             </div>
             
             <div>
-                <div class="user-profile-btn">
+                <div class="user-profile-btn" onclick="openProfilePanel()" style="cursor:pointer;">
                     <div class="user-avatar-mini" id="sidebarAvatar">U</div>
                     <div class="user-info-mini">
                         <h4 id="sidebarUsername">User</h4>
@@ -709,6 +716,31 @@
                 <i class="fa-solid fa-xmark" onclick="closeNotifPanel()"></i>
             </div>
             <div id="notifResultsList"></div>
+        </div>
+    </div>
+
+    <!-- PROFİLİM -->
+    <div id="profileModalOverlay" onclick="if(event.target===this) closeProfilePanel()">
+        <div id="profileModal">
+            <div class="search-modal-header">
+                <h3>Profilim</h3>
+                <i class="fa-solid fa-xmark" onclick="closeProfilePanel()"></i>
+            </div>
+            <div id="profileModalBody">
+                <div>
+                    <label>Ad</label>
+                    <input type="text" id="profileFirstName" class="input-box">
+                </div>
+                <div>
+                    <label>Soyad</label>
+                    <input type="text" id="profileLastName" class="input-box">
+                </div>
+                <div>
+                    <label>Hakkımda</label>
+                    <textarea id="profileBio" class="input-box" maxlength="160" placeholder="Kendinden kısaca bahset..."></textarea>
+                </div>
+                <button class="btn" style="width:100%;" onclick="saveProfile()">Kaydet</button>
+            </div>
         </div>
     </div>
 
@@ -1026,6 +1058,14 @@
             if (currentUser) {
                 renderLeaderboard();
                 loadFeed();
+                // Profil (ad/soyad/bio) başka bir yerden güncellenirse kenar çubuğu da tazelensin.
+                if (currentUser !== ADMIN_USER) {
+                    const nameEl = document.getElementById('sidebarUsername');
+                    if (nameEl) {
+                        const badge = db.users[currentUser]?.verified ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
+                        nameEl.innerHTML = `${db.users[currentUser]?.displayName || 'Kullanıcı'} ${badge}`;
+                    }
+                }
                 const searchOverlay = document.getElementById('searchModalOverlay');
                 if (searchOverlay && searchOverlay.classList.contains('show')) {
                     if (currentSearchTab === 'search') renderUserSearch();
@@ -1300,6 +1340,30 @@
             loadFeed();
             renderLeaderboard();
             subscribeNotifications();
+        }
+
+        /* --- PROFİLİM (profil yönetimi) --- */
+        function openProfilePanel() {
+            if (currentUser === ADMIN_USER) return; // Sistem yöneticisinin profili buradan düzenlenmez.
+            const u = db.users[currentUser] || {};
+            document.getElementById('profileFirstName').value = u.firstName || '';
+            document.getElementById('profileLastName').value = u.lastName || '';
+            document.getElementById('profileBio').value = u.bio || '';
+            document.getElementById('profileModalOverlay').classList.add('show');
+        }
+        function closeProfilePanel() {
+            document.getElementById('profileModalOverlay').classList.remove('show');
+        }
+        async function saveProfile() {
+            await firebaseReady;
+            const firstName = document.getElementById('profileFirstName').value.trim();
+            const lastName = document.getElementById('profileLastName').value.trim();
+            const bio = document.getElementById('profileBio').value.trim();
+            if (!firstName || !lastName) return showToast("Ad ve soyad boş olamaz.", "error");
+            const displayName = `${firstName} ${lastName}`;
+            firestore.collection('users').doc(currentUser).update({ firstName, lastName, displayName, bio })
+                .then(() => { closeProfilePanel(); showToast("Profil güncellendi."); })
+                .catch(e => { console.error('Profil güncellenemedi:', e); showToast("Profil güncellenemedi.", "error"); });
         }
 
         function switchView(viewId) {
