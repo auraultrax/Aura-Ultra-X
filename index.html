@@ -412,6 +412,15 @@
         #profileModalBody { overflow-y: auto; padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
         #profileModalBody label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: block; }
         #profileModalBody textarea.input-box { resize: vertical; min-height: 70px; font-family: inherit; }
+
+        #roomMembersModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        #roomMembersModalOverlay.show { display: flex; opacity: 1; }
+        #roomMembersModal { background: #1c1c20; border: 1px solid var(--border); border-radius: 20px; width: 92%; max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+        #roomMembersBody { overflow-y: auto; padding: 4px 18px 18px; }
+        .room-member-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+        .room-member-row:last-child { border-bottom: none; }
+        .room-member-name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .room-member-tag { font-size: 0.75rem; color: var(--text-muted); }
         .notif-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); }
         .notif-item:hover { background: rgba(255,255,255,0.04); }
         .notif-item.unread { background: rgba(139, 92, 246, 0.1); }
@@ -450,12 +459,22 @@
             #app { grid-template-columns: 1fr; }
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
-            .main-content { border-right: none; padding-bottom: 80px; }
+            .mobile-top-bar { display: flex; }
+            .main-content { border-right: none; padding-bottom: 80px; padding-top: 62px; }
             .auth-card { padding: 2rem 1.5rem; border: none; background: transparent; box-shadow: none; }
             #authOverlay { background: var(--bg-base); }
             .podium { gap: 6px; }
             .podium-name { font-size: 0.85rem; }
         }
+        .mobile-top-bar {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; z-index: 999;
+            align-items: center; justify-content: space-between;
+            background: rgba(10, 10, 12, 0.92); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px; padding-top: env(safe-area-inset-top, 12px);
+        }
+        .mobile-top-bar .brand { font-size: 1rem; }
+        .mobile-top-bar .user-avatar-mini { cursor: pointer; width: 34px; height: 34px; }
     
         .google-btn { width:100%; background:#fff; color:#222; border:1px solid #ddd; margin-bottom:10px; }
         .google-btn:hover { background:#f4f4f4; }
@@ -503,6 +522,12 @@
     <!-- MAIN APP STRUCTURE -->
     <div id="app">
         
+        <!-- MOBİL ÜST ÇUBUK (profil erişimi için) -->
+        <div class="mobile-top-bar">
+            <div class="brand"><i class="fa-solid fa-bolt-lightning"></i> Aura</div>
+            <div class="user-avatar-mini" id="mobileTopAvatar" onclick="openProfilePanel()">U</div>
+        </div>
+
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <div>
@@ -744,6 +769,20 @@
         </div>
     </div>
 
+    <!-- ODA ÜYELERİ / YÖNETİMİ -->
+    <div id="roomMembersModalOverlay" onclick="if(event.target===this) closeRoomMembersPanel()">
+        <div id="roomMembersModal">
+            <div class="search-modal-header">
+                <h3>Oda Üyeleri</h3>
+                <i class="fa-solid fa-xmark" onclick="closeRoomMembersPanel()"></i>
+            </div>
+            <div id="roomMembersBody">
+                <button class="btn btn-outline" id="roomLockToggleBtn" style="width:100%; margin-bottom:14px;" onclick="toggleRoomLock()"></button>
+                <div id="roomMembersList"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- DESTEK BUTONU -->
     <a id="supportFab" href="mailto:xauraultra@gmail.com?subject=Aura%20X%20Destek" aria-label="Destek" title="Destek">
         <i class="fa-solid fa-headset"></i>
@@ -817,6 +856,12 @@
                 msg = 'İnternet bağlantısı bulunamadı. Bağlantınızı kontrol edip tekrar deneyin.';
             } else if (err && err.code === 'auth/network-request-failed') {
                 msg = 'Bağlantı engellendi (auth/network-request-failed). Reklam engelleyici veya gizlilik/izleme koruması bu siteyi engelliyor olabilir; lütfen bu site için kapatıp sayfayı yenileyin, farklı bir tarayıcı deneyin ya da VPN kapalıysa cihaz tarih/saatini kontrol edin.';
+            } else if (err && err.code === 'auth/admin-restricted-operation') {
+                // Bu, cihazla ilgili değil: Firebase projesinde "yeni hesap oluşturma"
+                // (sign-up) kısıtlanmış demektir. Site geliştiricisinin Firebase
+                // Console > Authentication > Settings > User actions kısmından
+                // "Enable create (sign-up)" seçeneğini açması gerekir.
+                msg = 'Bağlantı engellendi (auth/admin-restricted-operation). Bu bir cihaz sorunu değil — geliştiriciye bildirin, Firebase proje ayarı düzeltilmeli.';
             } else {
                 msg = 'Sunucuya bağlanılamadı. Bağlantınız zayıf olabilir ya da tarayıcınız güncel olmayabilir. Sayfayı yenileyip tekrar deneyin.' + detail;
             }
@@ -1319,6 +1364,8 @@
             document.getElementById('app').style.display = 'grid';
             
             document.getElementById('sidebarAvatar').innerText = currentUser.charAt(0).toUpperCase();
+            const mobileAvatar = document.getElementById('mobileTopAvatar');
+            if (mobileAvatar) mobileAvatar.innerText = currentUser.charAt(0).toUpperCase();
             
             // Mavi tik kontrolü profil isminde de gösterilsin
             const userBadge = (currentUser === ADMIN_USER || db.users[currentUser]?.verified) ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : '';
@@ -1674,7 +1721,13 @@
         let activeRoomData = null;
         let replyingToMsg = null;
         let editingMsgId = null;
-        const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏,'😔'];
+        const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+        // Oda kurucusu VEYA sonradan yönetici yapılmış biri VEYA sistem yöneticisi.
+        function isRoomAdmin(room) {
+            if (!room) return false;
+            return room.admin === currentUser || (room.admins || []).includes(currentUser) || currentUser === ADMIN_USER;
+        }
 
         function renderRoomList() {
             const list = document.getElementById('roomList') || document.getElementById('roomsList') || document.querySelector('.room-list');
@@ -1738,11 +1791,14 @@
             roomUnsubscribe = firestore.collection('rooms').doc(roomName).onSnapshot(doc => {
                 if (!doc.exists) { showToast("Bu oda silindi.", "error"); leaveRoom(); return; }
                 activeRoomData = {id:doc.id, ...doc.data()};
-                const isAdmin = activeRoomData.admin === currentUser || currentUser === ADMIN_USER;
-                document.getElementById('roomChatHeaderActions').innerHTML = `<button class="btn btn-outline" onclick="openRacePanel()" title="1D Araba Yarışı"><i class="fa-solid fa-flag-checkered"></i></button>${isAdmin ? '<button class="btn btn-danger" onclick="deleteActiveRoom()">Odayı Sil</button>' : ''}<button class="btn btn-outline" onclick="leaveRoom()">Çık</button>`;
+                const isOwner = activeRoomData.admin === currentUser || currentUser === ADMIN_USER;
+                const isMod = isRoomAdmin(activeRoomData);
+                document.getElementById('roomChatHeaderActions').innerHTML = `<button class="btn btn-outline" onclick="openRacePanel()" title="1D Araba Yarışı"><i class="fa-solid fa-flag-checkered"></i></button>${isMod ? '<button class="btn btn-outline" onclick="openRoomMembersPanel()" title="Üyeler"><i class="fa-solid fa-users"></i></button>' : ''}${isOwner ? '<button class="btn btn-danger" onclick="deleteActiveRoom()">Odayı Sil</button>' : ''}<button class="btn btn-outline" onclick="leaveRoom()">Çık</button>`;
                 renderChat();
                 const raceOverlay = document.getElementById('raceModalOverlay');
                 if (raceOverlay && raceOverlay.classList.contains('show')) renderRacePanel();
+                const membersOverlay = document.getElementById('roomMembersModalOverlay');
+                if (membersOverlay && membersOverlay.classList.contains('show')) renderRoomMembersPanel();
             });
         }
 
@@ -1760,6 +1816,57 @@
             if (!activeRoom || !activeRoomData) return;
             if (activeRoomData.admin !== currentUser && currentUser !== ADMIN_USER) return showToast("Odayı silme yetkiniz yok!", "error");
             firestore.collection('rooms').doc(activeRoom).delete().then(() => { leaveRoom(); showToast("Oda silindi."); });
+        }
+
+        /* --- ODA ÜYELERİ / YÖNETİMİ (kilitle, yönetici yap) --- */
+        function openRoomMembersPanel() {
+            if (!activeRoomData || !isRoomAdmin(activeRoomData)) return;
+            renderRoomMembersPanel();
+            document.getElementById('roomMembersModalOverlay').classList.add('show');
+        }
+        function closeRoomMembersPanel() {
+            document.getElementById('roomMembersModalOverlay').classList.remove('show');
+        }
+        function renderRoomMembersPanel() {
+            const r = activeRoomData;
+            if (!r) return;
+            const lockBtn = document.getElementById('roomLockToggleBtn');
+            lockBtn.innerHTML = r.locked
+                ? '<i class="fa-solid fa-lock-open"></i> Kilidi Aç (Herkes Yazabilsin)'
+                : '<i class="fa-solid fa-lock"></i> Kilitle (Kimse Yazamasın)';
+
+            const members = r.members || [];
+            const list = document.getElementById('roomMembersList');
+            list.innerHTML = members.map(m => {
+                const u = db.users[m] || {};
+                const displayName = m === ADMIN_USER ? 'Aura X' : (u.displayName || m);
+                const isHeadAdmin = r.admin === m;
+                const isCoAdmin = (r.admins || []).includes(m);
+                const crown = isHeadAdmin ? '<i class="fa-solid fa-crown msg-admin-badge" title="Kurucu"></i>' : (isCoAdmin ? '<i class="fa-solid fa-shield-halved" style="color:var(--primary);" title="Yönetici"></i>' : '');
+                const canPromote = !isHeadAdmin && !isCoAdmin && m !== ADMIN_USER;
+                return `<div class="room-member-row">
+                    <div class="user-avatar-mini" style="width:34px;height:34px;font-size:0.9rem;">${displayName.charAt(0).toUpperCase()}</div>
+                    <div style="flex:1; overflow:hidden;">
+                        <div class="room-member-name">${displayName} ${crown}</div>
+                        <div class="room-member-tag">@${m}</div>
+                    </div>
+                    ${canPromote ? `<button class="btn btn-outline" style="width:auto; padding:6px 10px; font-size:0.78rem;" onclick="makeRoomAdmin('${m}')">Yönetici Yap</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+        function toggleRoomLock() {
+            if (!activeRoom || !activeRoomData || !isRoomAdmin(activeRoomData)) return;
+            firestore.collection('rooms').doc(activeRoom).update({ locked: !activeRoomData.locked })
+                .catch(e => { console.error(e); showToast("İşlem başarısız.", "error"); });
+        }
+        function makeRoomAdmin(username) {
+            if (!activeRoom || !activeRoomData || !isRoomAdmin(activeRoomData)) return;
+            const admins = [...(activeRoomData.admins || [])];
+            if (admins.includes(username)) return;
+            admins.push(username);
+            firestore.collection('rooms').doc(activeRoom).update({ admins })
+                .then(() => showToast(`${username} yönetici yapıldı.`))
+                .catch(e => { console.error(e); showToast("İşlem başarısız.", "error"); });
         }
 
         function renderChat() {
@@ -1812,6 +1919,7 @@
             await firebaseReady;
             if (!activeRoom || !activeRoomData) return;
             if ((activeRoomData.muted || []).includes(currentUser) && currentUser !== ADMIN_USER) return showToast("Oda yöneticisi tarafından engellendiniz.", "error");
+            if (activeRoomData.locked && !isRoomAdmin(activeRoomData)) return showToast("Oda kilitli, şu anda sadece yöneticiler mesaj yazabilir.", "error");
             const text = document.getElementById('chatInput').value.trim();
             const fileInp = document.getElementById('chatImage');
 
@@ -1829,10 +1937,23 @@
             if (!text && !fileInp.files[0]) return;
             const msg = {id:Date.now().toString(), author:currentUser, text, img:null, timestamp:Date.now()};
             if (replyingToMsg) msg.replyTo = {id: replyingToMsg.id, author: replyingToMsg.author, text: (replyingToMsg.text || '').slice(0, 120)};
-            const save = () => firestore.collection('rooms').doc(activeRoom).update({messages:firebase.firestore.FieldValue.arrayUnion(msg)});
+            const roomNameAtSend = activeRoom;
+            const save = () => firestore.collection('rooms').doc(activeRoom).update({messages:firebase.firestore.FieldValue.arrayUnion(msg)})
+                .then(() => notifyRoomMembers(roomNameAtSend, msg));
             if (fileInp.files[0]) getBase64(fileInp.files[0], b => { msg.img=b; save().catch(console.error); }); else save().catch(console.error);
             document.getElementById('chatInput').value=''; fileInp.value='';
             cancelChatCompose();
+        }
+
+        // Kayıtlı olduğu odalardan mesaj geldiğinde üyelere bildirim gitsin.
+        function notifyRoomMembers(roomName, msg) {
+            if (!activeRoomData) return;
+            const members = activeRoomData.members || [];
+            const authorName = db.users[currentUser]?.displayName || currentUser;
+            const preview = (msg.text && msg.text.length) ? msg.text.slice(0, 60) : (msg.img ? 'bir görsel gönderdi' : 'mesaj gönderdi');
+            members.forEach(member => {
+                sendNotification(member, 'roommsg', `${authorName}, "${roomName}" odasına yazdı: "${preview}"`, { roomId: roomName });
+            });
         }
 
         /* --- MESAJ YANITLA / DÜZENLE / SİL / EMOJİ TEPKİ --- */
@@ -2114,7 +2235,7 @@
         /* --- IOS ACTION SHEET (UZUN BASMA KOŞULLARI) --- */
         function startPress(msgId) {
             const r = activeRoomData;
-            if (r.admin !== currentUser && currentUser !== ADMIN_USER) return;
+            if (!isRoomAdmin(r)) return;
             
             longPressTimer = setTimeout(() => {
                 openActionMenu(msgId);
